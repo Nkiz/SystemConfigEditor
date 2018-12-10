@@ -119,7 +119,7 @@ public class Controller {
 		        			key = "#Comment#";
 			        		value = line[1].trim();
 			        		//TODO: erst mal Comments raus
-//			        		continue;
+			        		continue;
 		        		}else {
 			        		key = line[0].trim();
 				        	value = line[1].trim();
