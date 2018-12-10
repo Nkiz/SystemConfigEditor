@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cnc.msl.view.MainViewController">
+   <children>
+      <VBox prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <MenuBar>
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem fx:id="btn_chooseWs" mnemonicParsing="false" onAction="#handleChooseWs" text="Choose Workspace" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Delete" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <SplitPane dividerPositions="0.29797979797979796" prefHeight="400.0" prefWidth="600.0">
+              <items>
+                <AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0">
+                     <children>
+                        <TreeTableView fx:id="tbl_directory" onMouseClicked="#handleSelectFile" prefHeight="398.0" prefWidth="294.0" showRoot="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="100.0">
+                     <children>
+                        <ButtonBar prefHeight="25.0" prefWidth="829.0">
+                          <buttons>
+                              <Button fx:id="btn_add" cancelButton="true" mnemonicParsing="false" onAction="#addLine" text="+" />
+                              <Button fx:id="btn_del" cancelButton="true" mnemonicParsing="false" onAction="#delLine" text="-" />
+                              <Button fx:id="btn_save" defaultButton="true" mnemonicParsing="false" onAction="#saveFile" text="Speichern" />
+                            <Button fx:id="btn_cancel" cancelButton="true" mnemonicParsing="false" onAction="#cancelFile" text="Abbrechen" />
+                          </buttons>
+                        </ButtonBar>
+                        <TreeTableView fx:id="tbl_elements" layoutY="28.0" prefHeight="572.0" prefWidth="838.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0" />
+                     </children>
+                  </AnchorPane>
+              </items>
+            </SplitPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
