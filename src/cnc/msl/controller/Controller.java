@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Stream;
 
-//import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.Yaml;
 
-import org.yaml.snakeyaml.*;
+//import org.yaml.snakeyaml.*;
 //import src.main.java.org.yaml.snakeyaml.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -131,8 +131,9 @@ public class Controller {
 //		        	lineItem = new TreeItem<String>(key + "-" + value);
 		        	lineItem = new TreeItem<>(new String[] {key, value});
 		        	if(lineNode == null) {
-		        		lineNode = new TreeItem<>(new String[] {"ROOT", ""});
-		        		root.getChildren().add(lineNode);
+		        		continue;
+//		        		lineNode = new TreeItem<>(new String[] {"ROOT", ""});
+//		        		root.getChildren().add(lineNode);
 		        	}
 		        	lineNode.getChildren().add(lineItem);
 	        	}

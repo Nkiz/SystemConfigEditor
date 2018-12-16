@@ -19,11 +19,13 @@
                 <Menu mnemonicParsing="false" text="File">
                   <items>
                     <MenuItem fx:id="btn_chooseWs" mnemonicParsing="false" onAction="#handleChooseWs" text="Choose Workspace" />
+                        <MenuItem fx:id="btn_relaodDirectory" mnemonicParsing="false" onAction="#handleReloadDirectory" text="Reload Directory" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
-                    <MenuItem mnemonicParsing="false" text="Delete" />
+                    <MenuItem fx:id="btn_newFile" mnemonicParsing="false" onAction="#handleNewFile" text="New Config" />
+                    <MenuItem fx:id="btn_delFile" mnemonicParsing="false" onAction="#handleDelFile" text="Delete Config" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
@@ -42,15 +44,16 @@
                   </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="100.0">
                      <children>
-                        <ButtonBar prefHeight="25.0" prefWidth="829.0">
+                        <TreeTableView fx:id="tbl_elements" maxHeight="573.0" minHeight="500.0" prefHeight="573.0" prefWidth="838.0" AnchorPane.bottomAnchor="27.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <ButtonBar layoutY="100.0" prefHeight="25.0" prefWidth="829.0" AnchorPane.topAnchor="575.0">
                           <buttons>
-                              <Button fx:id="btn_add" cancelButton="true" mnemonicParsing="false" onAction="#addLine" text="+" />
                               <Button fx:id="btn_del" cancelButton="true" mnemonicParsing="false" onAction="#delLine" text="-" />
-                              <Button fx:id="btn_save" defaultButton="true" mnemonicParsing="false" onAction="#saveFile" text="Speichern" />
-                            <Button fx:id="btn_cancel" cancelButton="true" mnemonicParsing="false" onAction="#cancelFile" text="Abbrechen" />
+                              <Button fx:id="btn_add" cancelButton="true" mnemonicParsing="false" onAction="#addLine" text="+" />
+                              <Button fx:id="btn_addNode" mnemonicParsing="false" onAction="#addNode" text="+ Node" />
+                              <Button fx:id="btn_save" defaultButton="true" mnemonicParsing="false" onAction="#saveFile" text="Save" />
+                            <Button fx:id="btn_cancel" cancelButton="true" mnemonicParsing="false" onAction="#cancelFile" text="Cancel" />
                           </buttons>
                         </ButtonBar>
-                        <TreeTableView fx:id="tbl_elements" layoutY="28.0" prefHeight="572.0" prefWidth="838.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0" />
                      </children>
                   </AnchorPane>
               </items>
