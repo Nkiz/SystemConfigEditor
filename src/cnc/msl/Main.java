@@ -13,12 +13,25 @@ public class Main extends Application {
 	
 	private Stage mainStage;
     private AnchorPane mainLayout;
+    private static boolean isRunning = false;
 
 	@Override
 	public void start(Stage mainStage) {
 		this.mainStage = mainStage;
         this.mainStage.setTitle("ConfigApp");
+        isRunning = true;
         showMainView();
+	}
+	
+	@Override
+	public void stop() throws Exception {
+		// TODO Auto-generated method stub
+		isRunning = false;
+		super.stop();
+	}
+	
+	public static boolean getIsRunning(){
+		return isRunning;
 	}
 	
 	public void showMainView() {

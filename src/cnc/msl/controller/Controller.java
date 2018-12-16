@@ -18,7 +18,6 @@ import org.yaml.snakeyaml.Yaml;
 //import org.yaml.snakeyaml.*;
 //import src.main.java.org.yaml.snakeyaml.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
@@ -29,7 +28,13 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableView;
 import javafx.util.Pair;
 
+import cnc.msl.view.MainViewController;
+
 public class Controller {
+	private MainViewController mainViewController;
+	public Controller(MainViewController mainViewController) {
+		this.mainViewController = mainViewController;
+	}
 	public TreeItem<String> getNodesForDirectory(File directory) { //Returns a TreeItem representation of the specified directory
 		TreeItem<String> root = new TreeItem<String>(directory.getName());
         for(File f : directory.listFiles()) {
@@ -363,6 +368,12 @@ public class Controller {
 			}
 		}
 		return new Pair<>(node, "end");
+	}
+	
+	public void loadList() {
+//		System.out.println("Changes");
+		this.mainViewController.loadDirectoryList();
+		return;
 	}
 	
 	public String getPath(TreeItem<String> item, String path){
