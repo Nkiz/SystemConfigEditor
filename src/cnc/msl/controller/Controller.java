@@ -13,7 +13,11 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Stream;
 
+//import com.amihaiemil.eoyaml.Yaml;
+
 import org.yaml.snakeyaml.Yaml;
+
+//import com.amihaiemil.eoyaml.YamlMapping;
 
 //import org.yaml.snakeyaml.*;
 //import src.main.java.org.yaml.snakeyaml.*;
@@ -49,7 +53,7 @@ public class Controller {
     }
 	
 	public Pair<TreeItem<String[]>, String> getNodesForElements(File file, int index, TreeItem<String[]> node) { //Returns a TreeItem representation of the specified directory
-		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getName(), ""});
+		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getName(), "", ""});
 		String key 					= "";
 		String value 				= "";
 		String[] line				= null;
@@ -86,11 +90,11 @@ public class Controller {
 //	        	else if (lineString.startsWith("[") || lineString.startsWith("\t[") || lineString.startsWith("\t\t[") || lineString.startsWith("\t\t\t[") || lineString.startsWith("\t\t\t\t[")) {
 	        	else if (lineString.contains("[") && !lineString.contains("#")) {
 	        		if(node == null) {
-	        			lineNode = new TreeItem<>(new String[] {lineString, ""});
+	        			lineNode = new TreeItem<>(new String[] {lineString, "", ""});
 	        			pair = this.getNodesForElements(file, i+1, lineNode);
 		        		lineNode = pair.getKey();
 	        		}else {
-	        			lineItem = new TreeItem<>(new String[] {lineString, ""});
+	        			lineItem = new TreeItem<>(new String[] {lineString, "", ""});
 	        			pair = this.getNodesForElements(file, i+1, lineItem);
 	        			lineItem = pair.getKey();
 			        	lineNode.getChildren().add(lineItem);
@@ -134,7 +138,7 @@ public class Controller {
 		        		value = "";
 					}
 //		        	lineItem = new TreeItem<String>(key + "-" + value);
-		        	lineItem = new TreeItem<>(new String[] {key, value});
+		        	lineItem = new TreeItem<>(new String[] {key, value, ""});
 		        	if(lineNode == null) {
 		        		continue;
 //		        		lineNode = new TreeItem<>(new String[] {"ROOT", ""});
@@ -159,16 +163,16 @@ public class Controller {
 		if (!fileName.contains("conf")) {
 			return;
 		}
-		File newFile = new File(fileParts[0] + "-yaml.conf");
-		if (!newFile.exists()) {
-	        try {
-	        	newFile.createNewFile();
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
-	    }
+//		File newFile = new File(fileParts[0] + "-yaml.conf");
+//		if (!newFile.exists()) {
+//	        try {
+//	        	newFile.createNewFile();
+//	        } catch (IOException e) {
+//	            e.printStackTrace();
+//	        }
+//	    }
 	    try {
-	        BufferedWriter bw = new BufferedWriter(new FileWriter(selectedDir + "\\" + newFile.getName()));
+	        BufferedWriter bw = new BufferedWriter(new FileWriter(selectedDir + File.separator + fileParts[0] + "-yaml.conf"));
 	        bw.write("---" + System.lineSeparator());
 	        getNode(allNode.getRoot(), bw);
 			bw.close();
@@ -192,10 +196,12 @@ public class Controller {
 					if(node.getValue()[0].contains(".conf")) {
 						yamlClassRootNode.addKey(node.getChildren().get(i).getValue()[0].replace("[", "").replace("]", ""));
 						yamlClassRootNode.addValue(node.getChildren().get(i).getValue()[1]);
+						yamlClassRootNode.addComment(node.getChildren().get(i).getValue()[2]);
 						bw.write(yamlClassRootNode.toString());
 					}else {
 						yamlClassNode.addKey(node.getChildren().get(i).getValue()[0].replace("[", "").replace("]", "").replace("\t", ""));
 						yamlClassNode.addValue(node.getChildren().get(i).getValue()[1]);
+						yamlClassNode.addComment(node.getChildren().get(i).getValue()[2]);
 						bw.write("  " + yamlClassNode.toString());
 					}
 				}
@@ -212,6 +218,7 @@ public class Controller {
 		}else {
 			yamlClassValue.addKey(node.getValue()[0].replace("[", "").replace("]", ""));
 			yamlClassValue.addValue(node.getValue()[1]);
+			yamlClassValue.addComment(node.getValue()[2]);
 			return yamlClassValue.toString();
 		}
 		
@@ -219,7 +226,7 @@ public class Controller {
 	
 	public void saveNodesYaml(TreeTableView<String[]> allNode, File selectedDir, File selectedFile) throws FileNotFoundException{
 		try {
-	        BufferedWriter bw = new BufferedWriter(new FileWriter(selectedDir + "\\" + selectedFile));
+	        BufferedWriter bw = new BufferedWriter(new FileWriter(selectedDir + File.separator + selectedFile));
 	        bw.write("---" + System.lineSeparator());
 	        this.getNodesFromYaml2(allNode.getRoot(), bw, 0);
 			bw.close();
@@ -229,7 +236,7 @@ public class Controller {
 		return ;
 	}
 	
-	public Pair<TreeItem<String[]>, String> getYamlNodesFromFile(File file, int index, TreeItem<String[]> node) throws FileNotFoundException {
+	public Pair<TreeItem<String[]>, String> getYamlNodesFromFile(File file, int index, TreeItem<String[]> node) throws IOException {
 		Pair<TreeItem<String[]>, String> pair = null;
 		TreeItem<String[]> lineItem 	= null;
 		TreeItem<String[]> lineNode 	= null;
@@ -239,19 +246,21 @@ public class Controller {
 		InputStream targetStream = new FileInputStream(file);
 		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
 		//System.out.println(result.toString());
-		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getName(), ""});
+
+		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getName(), "", ""});
+		
 		for (Map.Entry<String, Object> entry : result.entrySet())
 		{
-			lineItem = getNodesFromYaml(entry.getKey(),entry.getValue());
+			lineItem = getNodesFromYaml(entry.getKey(),entry.getValue(), file);
 			root.getChildren().add(lineItem);
 //		    System.out.println(entry.getKey() + "/" + entry.getValue());
 		}
 		return new Pair<>(root, "end");
 	}
 	
-	public TreeItem<String[]> getNodesFromYaml(String map_key, Object map_value) throws FileNotFoundException {
+	public TreeItem<String[]> getNodesFromYaml(String map_key, Object map_value, File file) throws FileNotFoundException {
 		Yaml yaml = new Yaml();
-		TreeItem<String[]> item 		= new TreeItem<>(new String[] {map_key, ""});
+		TreeItem<String[]> item 		= new TreeItem<>(new String[] {map_key, "", ""});
 		String key 					= "";
 		String value 				= "";
 		String[] line				= null;
@@ -262,17 +271,49 @@ public class Controller {
 		boolean isNode				= false;
 		String lineString			= "";
 		Pair<TreeItem<String[]>, String> pair = null;
-		
-		//System.out.println(map_value.getClass());
-		
+		String comment				= "";
 		
 		if(!map_value.equals(null)) {
 //			System.out.println(map_value.getClass());
 			if(map_value.getClass().equals(java.util.ArrayList.class)) {
+				comment = "";
+				try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
+			        Object[] allLines = stream.toArray();
+			        for (int i=0; i < allLines.length; i++) {
+//			        	index = i;
+			        	Object object = allLines[i];
+			        	lineString = object.toString();
+			        	if(lineString.contains(map_key + ":")) {
+			        		if(lineString.contains("#")) {
+			        			item.setValue(new String[] {map_key, "", lineString.split("#")[1].toString()});
+			        			break;
+			        		}
+			        	}
+					}
+				}catch (Exception e) {
+					// TODO: handle exception
+				}
 				list = (ArrayList<Object>) map_value;
 				for(Object listValue:list) {
+					comment = "";
+					try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
+				        Object[] allLines = stream.toArray();
+				        for (int i=0; i < allLines.length; i++) {
+//				        	index = i;
+				        	Object object = allLines[i];
+				        	lineString = object.toString();
+				        	if(lineString.contains(listValue.toString())) {
+				        		if(lineString.contains("#")) {
+				        			comment = lineString.split("#")[1];
+				        			break;
+				        		}
+				        	}
+						}
+					}catch (Exception e) {
+						// TODO: handle exception
+					}
 					if(listValue == null) {
-						lineItem = new TreeItem<>(new String[] {"", ""});
+						lineItem = new TreeItem<>(new String[] {"", "", comment});
 						item.getChildren().add(lineItem);
 						continue;
 					}
@@ -283,7 +324,7 @@ public class Controller {
 						for (int i = 0; i < listValueLine.length; i++) {
 							line = listValueLine[i].split(":");
 							if(line.length == 2) {
-								lineItem = new TreeItem<>(new String[] {line[0], line[1]});
+								lineItem = new TreeItem<>(new String[] {line[0], line[1], comment});
 								item.getChildren().add(lineItem);
 							}
 						}
@@ -299,16 +340,16 @@ public class Controller {
 //						Map<String,Object> result = (Map<String,Object>)yaml.load(listValueLine[1].trim());
 						listTmp = new ArrayList<Object>();
 						listTmp.add(listValueLine[1]);
-						item.getChildren().add(getNodesFromYaml(listValueLine[0], listTmp));
+						item.getChildren().add(getNodesFromYaml(listValueLine[0], listTmp, file));
 						continue;
 					}
 //					if(listValue.toString())
 					line = listValue.toString().split(":");
 					if(line.length == 2) {
-						lineItem = new TreeItem<>(new String[] {line[0], line[1]});
+						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment});
 						item.getChildren().add(lineItem);
 					}else {
-						item.getChildren().add(getNodesFromYaml(line[0],listValue));
+						item.getChildren().add(getNodesFromYaml(line[0],listValue, file));
 					}
 				}
 			}
@@ -331,6 +372,7 @@ public class Controller {
 					if(!node.getValue()[0].contains(".conf")) {
 						yamlClassNode.addKey(node.getChildren().get(i).getValue()[0]);
 						yamlClassNode.addValue("");
+						yamlClassNode.addComment(node.getChildren().get(i).getValue()[2]);
 						if(yamlClassNode.getKey().equals("")) {
 							bw.write("  -");
 						}else {
@@ -342,6 +384,7 @@ public class Controller {
 					}else {
 						yamlClassRootNode.addKey(node.getChildren().get(i).getValue()[0]);
 						yamlClassRootNode.addValue("");
+						yamlClassRootNode.addComment(node.getChildren().get(i).getValue()[2]);
 						bw.write(yamlClassRootNode.toString());
 					}
 					getNodesFromYaml2(node.getChildren().get(i), bw, localIndex);
@@ -354,6 +397,7 @@ public class Controller {
 					}else {
 						yamlClassValue.addKey(node.getChildren().get(i).getValue()[0]);
 						yamlClassValue.addValue(node.getChildren().get(i).getValue()[1]);
+						yamlClassValue.addComment(node.getChildren().get(i).getValue()[2]);
 						bw.write(yamlClassValue.toString());
 					}
 				}
@@ -364,6 +408,7 @@ public class Controller {
 			}else {
 				yamlClassValue.addKey(node.getValue()[0]);
 				yamlClassValue.addValue(node.getValue()[1]);
+				yamlClassValue.addComment(node.getValue()[2]);
 				bw.write(yamlClassValue.toString());
 			}
 		}

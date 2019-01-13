@@ -3,6 +3,7 @@ package cnc.msl.model;
 public class YamlDynamicValue<ClassTyp>{
 	private ClassTyp key;
 	private ClassTyp value;
+	private ClassTyp comment;
 
 	public void addKey(ClassTyp key) {
       this.key = key;
@@ -20,8 +21,20 @@ public class YamlDynamicValue<ClassTyp>{
       return value;
    }
    
+   public void addComment(ClassTyp comment) {
+      this.comment = comment;
+   }
+
+   public ClassTyp getComment() {
+      return comment;
+   }	
+   
    public String toString() { 
-	    return "  - " +  key + ":" + value + System.lineSeparator();
-	} 
+	   if(comment != "" || comment == null ) {
+		   return "  - " +  key + ":" + value + " #" + comment +  System.lineSeparator();
+	   }else {
+	   	   return "  - " +  key + ":" + value + System.lineSeparator();
+   	   }
+   } 
    
 }

@@ -120,17 +120,23 @@ public class MainViewController {
 		TreeItem<String> root = new TreeItem<>();
 		//Creating a column
         TreeTableColumn<String[],String> elemColumn = new TreeTableColumn<>("Key");
-        elemColumn.setPrefWidth(tbl_elements.getPrefWidth()/2);
+        elemColumn.setPrefWidth(tbl_elements.getPrefWidth()/3);
         TreeTableColumn<String[],String> valueColumn = new TreeTableColumn<>("Value");
-        valueColumn.setPrefWidth(tbl_elements.getPrefWidth()/2);
+        valueColumn.setPrefWidth(tbl_elements.getPrefWidth()/3);
+        TreeTableColumn<String[],String> commentColumn = new TreeTableColumn<>("Comment");
+        commentColumn.setPrefWidth(tbl_elements.getPrefWidth()/3);
      
         //Defining cell content
         valueColumn.setCellValueFactory((CellDataFeatures<String[], String> p) ->
             new ReadOnlyStringWrapper(p.getValue().getValue()[1]));  
         elemColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
         	new ReadOnlyStringWrapper(p.getValue().getValue()[0])); 
+        commentColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
+    	new ReadOnlyStringWrapper(p.getValue().getValue()[2])); 
+        
         valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         elemColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+        commentColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         
         valueColumn.setOnEditCommit((CellEditEvent<String[], String> t) -> {
         	TreeItem<String[]> selItem = new TreeItem<>();
@@ -150,9 +156,20 @@ public class MainViewController {
         	newValue2[0] = t.getNewValue();
             ( t.getTreeTableView().getTreeItem(t.getTreeTablePosition().getRow())).setValue(newValue2);
         });
+        
+        commentColumn.setOnEditCommit((CellEditEvent<String[], String> t) -> {
+        	TreeItem<String[]> selItem = new TreeItem<>();
+        	TreeItem<String[]> rowItem = new TreeItem<>();
+        	rowItem = t.getRowValue();
+        	String[] newValue3 = t.getRowValue().getValue();
+        	newValue3[2] = t.getNewValue();
+            ( t.getTreeTableView().getTreeItem(t.getTreeTablePosition().getRow())).setValue(newValue3);
+            lbl_changes.setVisible(true);
+        });
 
         tbl_elements.getColumns().add(elemColumn);
         tbl_elements.getColumns().add(valueColumn);
+        tbl_elements.getColumns().add(commentColumn);
         tbl_elements.setEditable(true);
 	}
 	
@@ -206,11 +223,19 @@ public class MainViewController {
 	
 	@FXML
 	private void handleDelFile(ActionEvent event) {
-		File delFile = new File(this.selectedDir + "\\" + this.selectedFile);
-		File delFile2 = new File("C:/Users/nkiz_x240/Desktop/SystemConfig/cnc-msl-master/etc/Alica-yaml.conf");
-//		delFile
-		System.out.println(delFile2.getPath());
-		System.out.println(delFile2.delete());
+		File delFile = new File(this.selectedDir + File.separator + this.selectedFile);
+//		File delFile2 = new File("C:/Users/nkiz_x240/Desktop/SystemConfig/cnc-msl-master/etc/Alica-yaml.conf");
+		delFile.setWritable(true);
+		//		delFile
+		try {
+			System.out.println(Files.isWritable(delFile.toPath()));
+			Files.delete(delFile.toPath());
+//			delFile.delete();
+		}catch (Exception e) {
+			System.out.println("Can't delete File!");
+		}
+//		System.out.println(delFile2.getPath());
+//		System.out.println(delFile2.delete());
 		this.loadDirectoryList();
 		System.out.println("DelFile");
 		return;
@@ -221,8 +246,8 @@ public class MainViewController {
 		lbl_changes.setVisible(true);
 		TreeItem<String[]> newNode = new TreeItem<>();
 		TreeItem<String[]> newLine = new TreeItem<>();
-		String[] newNodeValue = {"NewNode", ""};
-		String[] newLineValue = {"newLine", "X"};
+		String[] newNodeValue = {"NewNode", "", ""};
+		String[] newLineValue = {"newLine", "X", ""};
 		newLine.setValue(newLineValue);
 		newNode.getChildren().add(newLine);
 		newNode.setValue(newNodeValue);
@@ -237,7 +262,7 @@ public class MainViewController {
 	private void addLine() throws FileNotFoundException {
 		lbl_changes.setVisible(true);
 		TreeItem<String[]> newLine = new TreeItem<>();
-		String[] newValue = {"newLine", "X"};
+		String[] newValue = {"newLine", "X", ""};
 		newLine.setValue(newValue);
 //		int index = tbl_elements.getSelectionModel().getSelectedIndex();
 		int index = tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().indexOf(tbl_elements.getSelectionModel().getSelectedItem());
