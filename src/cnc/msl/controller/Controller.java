@@ -46,7 +46,9 @@ public class Controller {
             if(f.isDirectory()) { //Then we call the function recursively
                 root.getChildren().add(getNodesForDirectory(f));
             } else {
-                root.getChildren().add(new TreeItem<String>(f.getName()));
+            	if(f.getName().contains(".conf")) {
+            		root.getChildren().add(new TreeItem<String>(f.getName()));
+            	}
             }
         }
         return root;
@@ -56,6 +58,7 @@ public class Controller {
 		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getName(), "", ""});
 		String key 					= "";
 		String value 				= "";
+		String comment 				= "";
 		String[] line				= null;
 		TreeItem<String[]> lineItem 	= null;
 		TreeItem<String[]> lineNode 	= null;
@@ -125,20 +128,24 @@ public class Controller {
 		        		line = lineString.split("=");
 		        		if(line[0].startsWith("\t#")) {
 			        		line = lineString.split("#");
-		        			key = "#Comment#";
-			        		value = line[1].trim();
+//		        			key = "#Comment#";
+//			        		value = line[1].trim();
+			        		key = "";
+			        		value = "";
+			        		comment = line[1].trim();
 			        		//TODO: erst mal Comments raus
-			        		continue;
+//			        		continue;
 		        		}else {
 			        		key = line[0].trim();
 				        	value = line[1].trim();
+				        	comment = "";
 		        		}
 		        	}catch (Exception e) {
 	        			key = object.toString().trim();
 		        		value = "";
 					}
 //		        	lineItem = new TreeItem<String>(key + "-" + value);
-		        	lineItem = new TreeItem<>(new String[] {key, value, ""});
+		        	lineItem = new TreeItem<>(new String[] {key, value, comment});
 		        	if(lineNode == null) {
 		        		continue;
 //		        		lineNode = new TreeItem<>(new String[] {"ROOT", ""});
@@ -187,12 +194,17 @@ public class Controller {
 		YamlDynamicRootNode<String> yamlClassRootNode = new YamlDynamicRootNode<String>();
 		String tmpValue;
 //		if(node.getValue()[0].startsWith("[") || node.getValue()[0].startsWith("\t[") || node.getValue()[0].startsWith("\t\t[") || node.getValue()[0].startsWith("\t\t\t[") || node.getValue()[0].startsWith("\t\t\t\t[") || node.getValue()[0].contains(".conf")){
-		if(node.getValue()[0].equals("")) {
+		if(node.getValue()[0].equals("") && !node.getValue()[0].equals("")) {
 			return "  -" + System.lineSeparator();
 		}
 		if(node.getValue()[0].contains("[") || node.getValue()[0].contains(".conf")){
 			for (int i = 0; i < node.getChildren().size(); i++) {
-				if(node.getChildren().get(i).getValue()[0].contains("[") && node.getChildren().get(i).getValue()[0] !=null) {
+				if(node.getChildren().get(i).getValue()[2].equals("ms")) {
+					System.out.println("found");
+				}
+				System.out.println(node.getChildren().get(i).getValue()[0] + node.getChildren().get(i).getValue()[1] + node.getChildren().get(i).getValue()[2] );
+//				 || node.getChildren().get(i).getValue()[2] !=null
+				if((node.getChildren().get(i).getValue()[0].contains("[") && node.getChildren().get(i).getValue()[0] !=null)) {
 					if(node.getValue()[0].contains(".conf")) {
 						yamlClassRootNode.addKey(node.getChildren().get(i).getValue()[0].replace("[", "").replace("]", ""));
 						yamlClassRootNode.addValue(node.getChildren().get(i).getValue()[1]);
@@ -210,6 +222,10 @@ public class Controller {
 //					if(!node.getParent().getValue()[0].contains(".conf")) {
 					if(node.getParent().getValue()[0].contains("[")) {
 						bw.write("  ");
+					}
+					if(tmpValue.contains("- : #")) {
+//						tmpValue = tmpValue.replaceAll("- : ", "- LINECOMMENT:/*");
+						tmpValue = tmpValue.replaceAll("- : ", "");
 					}
 					bw.write(tmpValue);
 				}
@@ -248,6 +264,12 @@ public class Controller {
 		//System.out.println(result.toString());
 
 		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getName(), "", ""});
+		
+		try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
+	        Object[] allLines = stream.toArray();
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
 		
 		for (Map.Entry<String, Object> entry : result.entrySet())
 		{
@@ -289,6 +311,10 @@ public class Controller {
 			        			break;
 			        		}
 			        	}
+//			        	if(lineString.replace(" ", "").startsWith("#")) {
+//			        		item.setValue(new String[] {"", "", lineString});
+//			        		break;
+//			        	}
 					}
 				}catch (Exception e) {
 					// TODO: handle exception

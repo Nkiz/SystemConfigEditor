@@ -17,6 +17,7 @@ import cnc.msl.Main;
 import cnc.msl.controller.Controller;
 import cnc.msl.model.Value;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -107,12 +108,15 @@ public class MainViewController {
 	public void initElementList() {
 		//Creating a column
         TreeTableColumn<String,String> column = new TreeTableColumn<>("Configuration Files");
-        column.setPrefWidth(tbl_directory.getPrefWidth());
+//        column.se
      
         //Defining cell content
         column.setCellValueFactory((CellDataFeatures<String, String> p) -> 
             new ReadOnlyStringWrapper(p.getValue().getValue()));  
         tbl_directory.getColumns().add(column);
+        tbl_directory.widthProperty().addListener((obs, oldVal, newVal) -> {
+            column.setPrefWidth((double)newVal);
+        });
 	}
 	
 	public void initElementsList() {
@@ -120,11 +124,11 @@ public class MainViewController {
 		TreeItem<String> root = new TreeItem<>();
 		//Creating a column
         TreeTableColumn<String[],String> elemColumn = new TreeTableColumn<>("Key");
-        elemColumn.setPrefWidth(tbl_elements.getPrefWidth()/3);
+//        elemColumn.setPrefWidth(tbl_elements.getWidth()/3);
         TreeTableColumn<String[],String> valueColumn = new TreeTableColumn<>("Value");
-        valueColumn.setPrefWidth(tbl_elements.getPrefWidth()/3);
+//        valueColumn.setPrefWidth(tbl_elements.getWidth()/3);
         TreeTableColumn<String[],String> commentColumn = new TreeTableColumn<>("Comment");
-        commentColumn.setPrefWidth(tbl_elements.getPrefWidth()/3);
+//        commentColumn.setPrefWidth(tbl_elements.getWidth()/3);
      
         //Defining cell content
         valueColumn.setCellValueFactory((CellDataFeatures<String[], String> p) ->
@@ -171,6 +175,12 @@ public class MainViewController {
         tbl_elements.getColumns().add(valueColumn);
         tbl_elements.getColumns().add(commentColumn);
         tbl_elements.setEditable(true);
+        
+        tbl_elements.widthProperty().addListener((obs, oldVal, newVal) -> {
+        	elemColumn.setPrefWidth((double)newVal/3);
+        	valueColumn.setPrefWidth((double)newVal/3);
+        	commentColumn.setPrefWidth((double)newVal/3);
+        });
 	}
 	
 	@FXML
@@ -243,7 +253,7 @@ public class MainViewController {
 	
 	@FXML
 	private void addNode() throws FileNotFoundException {
-		lbl_changes.setVisible(true);
+		
 		TreeItem<String[]> newNode = new TreeItem<>();
 		TreeItem<String[]> newLine = new TreeItem<>();
 		String[] newNodeValue = {"NewNode", "", ""};
@@ -252,71 +262,92 @@ public class MainViewController {
 		newNode.getChildren().add(newLine);
 		newNode.setValue(newNodeValue);
 //		int index = tbl_elements.getSelectionModel().getSelectedIndex();
-		int index = tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().indexOf(tbl_elements.getSelectionModel().getSelectedItem());
+		try {
+			int index = tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().indexOf(tbl_elements.getSelectionModel().getSelectedItem());
+			tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().add(index+1,newNode);
+			tbl_elements.refresh();
+			lbl_changes.setVisible(true);
+		} catch (Exception e) {
+//			System.out.println("error in Select");
+		}
 //		System.out.println(index);
-		tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().add(index+1,newNode);
-		tbl_elements.refresh();
 	}
 	
 	@FXML
 	private void addLine() throws FileNotFoundException {
-		lbl_changes.setVisible(true);
-		TreeItem<String[]> newLine = new TreeItem<>();
-		String[] newValue = {"newLine", "X", ""};
-		newLine.setValue(newValue);
-//		int index = tbl_elements.getSelectionModel().getSelectedIndex();
-		int index = tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().indexOf(tbl_elements.getSelectionModel().getSelectedItem());
-//		System.out.println(index);
-		tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().add(index+1,newLine);
-		tbl_elements.refresh();
+		try {
+			TreeItem<String[]> newLine = new TreeItem<>();
+			String[] newValue = {"newLine", "X", ""};
+			newLine.setValue(newValue);
+//			int index = tbl_elements.getSelectionModel().getSelectedIndex();
+			int index = tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().indexOf(tbl_elements.getSelectionModel().getSelectedItem());
+//			System.out.println(index);
+			tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().add(index+1,newLine);
+			tbl_elements.refresh();
+			lbl_changes.setVisible(true);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 	}
 	
 	@FXML
 	private void delLine() throws FileNotFoundException {
-		lbl_changes.setVisible(true);
-		ObservableList selectedItems = tbl_elements.getSelectionModel().getSelectedItems();
-		TreeItem<String[]> selectedItem = (TreeItem<String[]>) selectedItems.get(0);
-		tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().remove(selectedItem);
-		tbl_elements.refresh();
-		lbl_changes.setVisible(true);
+		try {
+			ObservableList selectedItems = tbl_elements.getSelectionModel().getSelectedItems();
+			TreeItem<String[]> selectedItem = (TreeItem<String[]>) selectedItems.get(0);
+			tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().remove(selectedItem);
+			tbl_elements.refresh();
+			lbl_changes.setVisible(true);
+			lbl_changes.setVisible(true);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 	}
 	
 	@FXML
 	private void saveFile() throws FileNotFoundException, IOException {
-		if(this.selectedFile.getName().contains(".conf")) {
-			if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
-				controller.saveNodesYaml(tbl_elements, selectedNewDir, selectedFile);
+		try {
+			if(this.selectedFile.getName().contains(".conf")) {
+				if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
+					controller.saveNodesYaml(tbl_elements, selectedNewDir, selectedFile);
+				}
+				else {
+					controller.saveNodes(tbl_elements, selectedNewDir, selectedFile);
+				}
+				lbl_changes.setVisible(false);
+//				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 			}
-			else {
-				controller.saveNodes(tbl_elements, selectedNewDir, selectedFile);
-			}
-			lbl_changes.setVisible(false);
-//			controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
-		}
-//		controller.saveNodes(tbl_elements, selectedNewDir, selectedFile);
-		tbl_directory.setRoot(controller.getNodesForDirectory(selectedDir));
+//			controller.saveNodes(tbl_elements, selectedNewDir, selectedFile);
+			tbl_directory.setRoot(controller.getNodesForDirectory(selectedDir));
 
-		if(this.selectedFile.getName().contains(".conf")) {
-			if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
-				tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+			if(this.selectedFile.getName().contains(".conf")) {
+				if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
+					tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+				}
+				else {
+					tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+				}
+//				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 			}
-			else {
-				tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
-			}
-//			controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
 		
 	}
 	
 	@FXML
 	private void cancelFile() throws FileNotFoundException, IOException {
-		if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
-			tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+		try {
+			if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
+				tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+			}
+			else {
+				tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+			}
+			lbl_changes.setVisible(false);
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
-		else {
-			tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
-		}
-		lbl_changes.setVisible(false);
 	}
 	
 	@FXML
