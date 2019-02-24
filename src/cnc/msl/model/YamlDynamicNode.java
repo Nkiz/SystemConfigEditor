@@ -31,10 +31,10 @@ public class YamlDynamicNode<ClassTyp>{
    
    public String toString() { 
 	   if(comment != "" || comment == null ) {
-		   return "- " + key + ":" + value + " #" + comment + System.lineSeparator();
+		   return "- " + key.toString().trim() + ":" + value.toString().trim() + " #" + comment + System.lineSeparator();
 	   }
 	   else {
-	   	   return "- " + key + ":" + value + System.lineSeparator();
+	   	   return "- " + key.toString().trim() + ":" + value.toString().trim() + System.lineSeparator();
 	   }
    } 
    

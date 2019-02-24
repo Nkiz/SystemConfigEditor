@@ -24,25 +24,39 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableColumn.CellDataFeatures;
 import javafx.scene.control.TreeTableColumn.CellEditEvent;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
+import javafx.scene.image.ImageView;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.util.Callback;
 import javafx.util.Pair;
 
 import cnc.msl.controller.FileSystemEventHandler;
 
 public class MainViewController {
 	private Main mainApp;
+	private File selectedWs = new File("");
 	private File selectedDir = new File("");
 	private File selectedNewDir = new File("");
 //	private File selectedDir = new File("C:\\Users\\nkiz_x240\\Desktop\\SystemConfig\\cnc-msl-master\\etc");
@@ -53,9 +67,9 @@ public class MainViewController {
 	private FileSystemEventHandler fileSystemEventHandler = new FileSystemEventHandler(controller);
 	
 	@FXML
-	TreeTableView<String> tbl_directory;
+	public TreeTableView<String> tbl_directory;
 	@FXML
-	TreeTableView<String[]> tbl_elements;
+	public TreeTableView<String[]> tbl_elements;
 	@FXML
 	Button btn_del;
 	@FXML
@@ -68,6 +82,14 @@ public class MainViewController {
 	Button btn_cancel;
 	@FXML
 	Label lbl_changes;
+	@FXML
+	ButtonBar btnbar;
+	@FXML
+	VBox vbox_main;
+	@FXML
+	SplitPane sp_main;
+	@FXML
+	ImageView img_logo;
 	
 	@FXML
     private void initialize() {
@@ -83,22 +105,34 @@ public class MainViewController {
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle("Choose Workspace");
 		File defaultDirectory = selectedDir;
-		if(!defaultDirectory.getPath().equals("")) {
-			chooser.setInitialDirectory(defaultDirectory);
+		try {
+			if(!defaultDirectory.getPath().equals("")) {
+				chooser.setInitialDirectory(defaultDirectory);
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
-		this.selectedDir = chooser.showDialog(this.mainApp.getMainStage());
-		//this.selectedNewDir = chooser.showDialog(this.mainApp.getMainStage());
-		this.loadDirectoryList();
-//		System.out.println(this.selectedDir);
-		fileSystemEventHandler.register(this.selectedDir.toPath());
+		try {
+			this.selectedWs = chooser.showDialog(this.mainApp.getMainStage());
+			this.selectedDir = this.selectedWs;
+			//this.selectedNewDir = chooser.showDialog(this.mainApp.getMainStage());
+			this.loadDirectoryList();
+			fileSystemEventHandler.register(this.selectedWs.toPath());
+		} catch (Exception e) {
+			System.out.println("No WS selected");
+		}
 	}
 	
 	public void loadDirectoryList() {
 		Platform.runLater(new Runnable() {
 			@Override public void run() {
 				lbl_changes.setVisible(false);
-				if(!selectedDir.getPath().equals("")) {
-					tbl_directory.setRoot(controller.getNodesForDirectory(selectedDir));
+				try {
+					if(!selectedWs.getPath().equals("")) {
+						tbl_directory.setRoot(controller.getNodesForDirectory(selectedWs));
+					}
+				} catch (Exception e) {
+					// TODO: handle exception
 				}
 				
 			}
@@ -114,6 +148,7 @@ public class MainViewController {
         column.setCellValueFactory((CellDataFeatures<String, String> p) -> 
             new ReadOnlyStringWrapper(p.getValue().getValue()));  
         tbl_directory.getColumns().add(column);
+        column.setSortable(false);
         tbl_directory.widthProperty().addListener((obs, oldVal, newVal) -> {
             column.setPrefWidth((double)newVal);
         });
@@ -124,11 +159,10 @@ public class MainViewController {
 		TreeItem<String> root = new TreeItem<>();
 		//Creating a column
         TreeTableColumn<String[],String> elemColumn = new TreeTableColumn<>("Key");
-//        elemColumn.setPrefWidth(tbl_elements.getWidth()/3);
         TreeTableColumn<String[],String> valueColumn = new TreeTableColumn<>("Value");
-//        valueColumn.setPrefWidth(tbl_elements.getWidth()/3);
         TreeTableColumn<String[],String> commentColumn = new TreeTableColumn<>("Comment");
-//        commentColumn.setPrefWidth(tbl_elements.getWidth()/3);
+        TreeTableColumn<String[],String> overwirteColumn = new TreeTableColumn<>("OV");
+        
      
         //Defining cell content
         valueColumn.setCellValueFactory((CellDataFeatures<String[], String> p) ->
@@ -137,10 +171,45 @@ public class MainViewController {
         	new ReadOnlyStringWrapper(p.getValue().getValue()[0])); 
         commentColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
     	new ReadOnlyStringWrapper(p.getValue().getValue()[2])); 
+        overwirteColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
+    	new ReadOnlyStringWrapper(p.getValue().getValue()[3])); 
         
         valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         elemColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         commentColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+//        overwirteColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+
+         overwirteColumn.setCellFactory(new Callback<TreeTableColumn<String[], String>, TreeTableCell<String[], String>>() {
+            @Override
+            public TreeTableCell<String[], String> call(TreeTableColumn<String[], String> param) {
+                return new TreeTableCell<String[], String>() {
+
+                    @Override
+                    public void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (!isEmpty()) {
+//                            this.setTextFill(Color.RED);
+                            // Get fancy and change color based on data
+                            if(item.equals("X")) {
+//                                this.setTextFill(Color.RED);
+                                BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
+                                this.setBackground(new Background(fill));
+                            }else{
+                            	BackgroundFill fill = new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY);
+                                this.setBackground(new Background(fill));
+                            }
+                            setText(item);
+
+                        }else {
+                        	BackgroundFill fill = new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY);
+                            this.setBackground(new Background(fill));
+                            setText(item);
+                        }
+                    }
+
+                };
+            }
+        });
         
         valueColumn.setOnEditCommit((CellEditEvent<String[], String> t) -> {
         	TreeItem<String[]> selItem = new TreeItem<>();
@@ -156,9 +225,15 @@ public class MainViewController {
         	TreeItem<String[]> selItem = new TreeItem<>();
         	TreeItem<String[]> rowItem = new TreeItem<>();
         	rowItem = t.getRowValue();
-        	String[] newValue2 = t.getRowValue().getValue();
-        	newValue2[0] = t.getNewValue();
-            ( t.getTreeTableView().getTreeItem(t.getTreeTablePosition().getRow())).setValue(newValue2);
+        	if(rowItem.getValue()[0].contains(".conf")) {
+        		( t.getTreeTableView().getTreeItem(t.getTreeTablePosition().getRow())).setValue(rowItem.getValue());
+        	}else {
+	        	String[] newValue2 = t.getRowValue().getValue();
+	        	newValue2[0] = t.getNewValue();
+	        	
+	            ( t.getTreeTableView().getTreeItem(t.getTreeTablePosition().getRow())).setValue(newValue2);
+	            lbl_changes.setVisible(true);
+        	}
         });
         
         commentColumn.setOnEditCommit((CellEditEvent<String[], String> t) -> {
@@ -174,33 +249,62 @@ public class MainViewController {
         tbl_elements.getColumns().add(elemColumn);
         tbl_elements.getColumns().add(valueColumn);
         tbl_elements.getColumns().add(commentColumn);
+        tbl_elements.getColumns().add(overwirteColumn);
         tbl_elements.setEditable(true);
         
         tbl_elements.widthProperty().addListener((obs, oldVal, newVal) -> {
         	elemColumn.setPrefWidth((double)newVal/3);
         	valueColumn.setPrefWidth((double)newVal/3);
-        	commentColumn.setPrefWidth((double)newVal/3);
+        	commentColumn.setPrefWidth((double)newVal/4 + (double)newVal/24);
+        	overwirteColumn.setPrefWidth((double)newVal/24);
+        });
+        
+        vbox_main.heightProperty().addListener((obs, oldVal, newVal) -> {
+        	sp_main.setPrefHeight((double)newVal * 0.9);
+        });
+        vbox_main.widthProperty().addListener((obs, oldVal, newVal) -> {
+        	
+        	btnbar.setPrefWidth((double)newVal);
+        	btnbar.setMaxWidth((double)newVal);
+        	btnbar.setMinWidth((double)newVal);
+        	img_logo.translateXProperty().set(770 - (double)newVal);
         });
 	}
 	
 	@FXML
 	private void handleSelectFile(MouseEvent event) throws IOException {
 		if (event.getClickCount() == 2) {
-			selectedNewDir = new File(selectedDir + controller.getPath(tbl_directory.getSelectionModel().getSelectedItem(), ""));
-			this.selectedFile = new File(tbl_directory.getSelectionModel().getSelectedItem().getValue());
-			if(this.selectedFile.getName().contains(".conf")) {
-				if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
-					tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+			if(tbl_directory.getSelectionModel().getSelectedItem() != null) {
+				selectedNewDir = new File(selectedWs + controller.getPath(tbl_directory.getSelectionModel().getSelectedItem(), ""));
+				this.selectedDir = selectedNewDir;
+				this.selectedFile = new File(tbl_directory.getSelectionModel().getSelectedItem().getValue());
+				if(this.selectedFile.getName().contains(".conf")) {
+					if(Files.lines(Paths.get(selectedNewDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
+						tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+					}
+					else {
+						tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
+					}
+					lbl_changes.setVisible(false);
+	//				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 				}
-				else {
-					tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
-				}
-				lbl_changes.setVisible(false);
-//				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 			}
 		}
 	}
-	
+	@FXML
+	private void handleConvAllFiles(ActionEvent event) throws IOException {
+		try {
+			if(!selectedWs.toPath().toString().equals("")) {
+				System.out.println("Convert All Files");
+				controller.convertAllFiles(selectedWs);
+			}else {
+				System.out.println("No WS selected!");
+			}
+		} catch (Exception e) {
+			System.out.println("No WS selected!");
+		}
+		return;
+	}
 	@FXML
 	private void handleNewFile(ActionEvent event) throws IOException {
 		FileChooser fileChooser = new FileChooser();
@@ -227,14 +331,12 @@ public class MainViewController {
 		
 		tbl_elements.setRoot(controller.getYamlNodesFromFile(this.selectedFile,0, null).getKey());
 		
-//		System.out.println(newFile.getAbsolutePath());
 		return;
 	}
 	
 	@FXML
 	private void handleDelFile(ActionEvent event) {
 		File delFile = new File(this.selectedDir + File.separator + this.selectedFile);
-//		File delFile2 = new File("C:/Users/nkiz_x240/Desktop/SystemConfig/cnc-msl-master/etc/Alica-yaml.conf");
 		delFile.setWritable(true);
 		//		delFile
 		try {
@@ -244,8 +346,6 @@ public class MainViewController {
 		}catch (Exception e) {
 			System.out.println("Can't delete File!");
 		}
-//		System.out.println(delFile2.getPath());
-//		System.out.println(delFile2.delete());
 		this.loadDirectoryList();
 		System.out.println("DelFile");
 		return;
@@ -261,16 +361,13 @@ public class MainViewController {
 		newLine.setValue(newLineValue);
 		newNode.getChildren().add(newLine);
 		newNode.setValue(newNodeValue);
-//		int index = tbl_elements.getSelectionModel().getSelectedIndex();
 		try {
 			int index = tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().indexOf(tbl_elements.getSelectionModel().getSelectedItem());
 			tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().add(index+1,newNode);
 			tbl_elements.refresh();
 			lbl_changes.setVisible(true);
 		} catch (Exception e) {
-//			System.out.println("error in Select");
 		}
-//		System.out.println(index);
 	}
 	
 	@FXML
@@ -279,9 +376,7 @@ public class MainViewController {
 			TreeItem<String[]> newLine = new TreeItem<>();
 			String[] newValue = {"newLine", "X", ""};
 			newLine.setValue(newValue);
-//			int index = tbl_elements.getSelectionModel().getSelectedIndex();
 			int index = tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().indexOf(tbl_elements.getSelectionModel().getSelectedItem());
-//			System.out.println(index);
 			tbl_elements.getSelectionModel().getSelectedItem().getParent().getChildren().add(index+1,newLine);
 			tbl_elements.refresh();
 			lbl_changes.setVisible(true);
@@ -318,7 +413,7 @@ public class MainViewController {
 //				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 			}
 //			controller.saveNodes(tbl_elements, selectedNewDir, selectedFile);
-			tbl_directory.setRoot(controller.getNodesForDirectory(selectedDir));
+			tbl_directory.setRoot(controller.getNodesForDirectory(selectedWs));
 
 			if(this.selectedFile.getName().contains(".conf")) {
 				if(Files.lines(Paths.get(this.selectedDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
@@ -327,7 +422,6 @@ public class MainViewController {
 				else {
 					tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
 				}
-//				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
