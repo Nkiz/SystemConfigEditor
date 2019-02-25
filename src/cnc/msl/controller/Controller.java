@@ -12,6 +12,8 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -269,7 +271,7 @@ public class Controller {
 		return new Pair<>(root, "end");
 	}
 	
-	public TreeItem<String[]> getNodesFromYaml(String map_key, Object map_value, File file) throws FileNotFoundException {
+	public TreeItem<String[]> getNodesFromYaml(String map_key, Object map_value, File file) throws IOException {
 		Yaml yaml = new Yaml();
 		TreeItem<String[]> item 		= new TreeItem<>(new String[] {map_key, "", "", ""});
 		String key 					= "";
@@ -324,7 +326,11 @@ public class Controller {
 					if(listValue == null) {
 						comment = commentList.get(commentIndex);
 						++commentIndex;
-						lineItem = new TreeItem<>(new String[] {"#LINECOMMENT#", "#LINECOMMENT#", comment, "X"});
+						try {
+							lineItem = new TreeItem<>(new String[] {"#LINECOMMENT#", "#LINECOMMENT#", comment, ""});
+						}catch (Exception e) {
+							// TODO: handle exception
+						}
 						item.getChildren().add(lineItem);
 						continue;
 					}
@@ -354,7 +360,11 @@ public class Controller {
 								line = listValueLine[i].split(":");
 							}
 							if(line.length == 2) {
-								lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, ""});
+								try {
+									lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
+								} catch (Exception e) {
+									// TODO: handle exception
+								}
 								item.getChildren().add(lineItem);
 							}
 						}
@@ -371,7 +381,7 @@ public class Controller {
 					}
 					line = listValue.toString().split(":");
 					if(line.length == 2) {
-						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, ""});
+						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
 						item.getChildren().add(lineItem);
 					}else {
 						item.getChildren().add(getNodesFromYaml(line[0],listValue, file));
@@ -467,11 +477,9 @@ public class Controller {
 	}
 	
 	public boolean convertAllFiles(File directory) throws IOException {
-		TreeItem<String> root = new TreeItem<String>(directory.getName());
-		TreeItem<String> tmp;
         for(File f : directory.listFiles()) {
             if(f.isDirectory()) { //Then we call the function recursively
-            	convertAllFiles(f);
+            	convertAllFiles(f); 
             }else {
             	if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
 					mainViewController.tbl_elements.setRoot(getYamlNodesFromFile(f,0, null).getKey());
@@ -484,5 +492,68 @@ public class Controller {
             }
         }
 		return true;
+	}
+	public String checkOverwrite(File file, String parent, String key) throws IOException {
+		File tmpFile = file;
+		Yaml yaml = new Yaml();
+		Collection<Object> col = null;
+		Map<String, String> linkedHashMap = new LinkedHashMap<String, String>();
+		String tmp = "";
+		if(tmpFile == null) {
+			tmpFile = mainViewController.selectedWs;
+//			return "X";
+		}
+		for(File f : tmpFile.listFiles()) {
+            if(f.isDirectory()) { //Then we call the function recursively
+            	if(checkOverwrite(f,parent, key) == "X") {
+            		return "X";
+            	} 
+            }else {
+            	if(mainViewController.selectedDir.equals(f.getParentFile()) || mainViewController.selectedDir.length() < f.getParentFile().length()) {
+    				continue;
+    			}
+            	if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
+            		InputStream targetStream = new FileInputStream(f);
+            		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
+            		try (Stream<String> stream = Files.lines(Paths.get(f.getPath()))) {
+    			        Object[] allLines = stream.toArray();
+    			        for (int i=0; i < allLines.length; i++) {
+    			        	if(parent.equals("") || parent == null) {
+    			        		continue;
+    			        	}
+    			        	if(allLines[i].toString().contains(parent)) {
+    			        		for (int j = i; j < allLines.length; j++) {
+    			        			if(!allLines[j].toString().endsWith(":")) {
+	    			        			tmp = allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
+	    			        			if(allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {
+	    			        				return "X";
+	    			        			}
+    			        			}
+								}
+//    			        		System.out.println("found");
+    			        	}
+//    			        	System.out.println(allLines[i]);
+    			        }
+            		}catch (Exception e) {
+						// TODO: handle exception
+					}
+//            		for (Map.Entry<String, Object> entry : result.entrySet())
+//            		{
+//            			for (int i = 0; i < Object[]entry.getValue(); i++) {
+//							
+//						}
+//            			System.out.println(entry.getValue());
+//            			System.out.println(entry.getKey());
+//            		}
+            		col = result.values();
+//            		Pair<TreeItem<String[]>, String> list  = getYamlNodesFromFile(f,0, null);
+					
+//				}
+//				else {
+//					getNodesForElements(f,0, null);
+				}
+            }
+        }
+		return "";
 	}
 }

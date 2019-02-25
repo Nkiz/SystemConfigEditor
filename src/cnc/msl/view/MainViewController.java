@@ -56,8 +56,8 @@ import cnc.msl.controller.FileSystemEventHandler;
 
 public class MainViewController {
 	private Main mainApp;
-	private File selectedWs = new File("");
-	private File selectedDir = new File("");
+	public File selectedWs = new File("");
+	public File selectedDir = new File("");
 	private File selectedNewDir = new File("");
 //	private File selectedDir = new File("C:\\Users\\nkiz_x240\\Desktop\\SystemConfig\\cnc-msl-master\\etc");
 //	private File selectedNewDir = new File("C:\\Users\\nkiz_x240\\Desktop\\SystemConfig\\cnc-msl-master\\etc");
