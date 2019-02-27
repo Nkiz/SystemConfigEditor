@@ -37,6 +37,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -90,6 +91,8 @@ public class MainViewController {
 	SplitPane sp_main;
 	@FXML
 	ImageView img_logo;
+	@FXML
+	public ProgressIndicator pi_load;
 	
 	@FXML
     private void initialize() {
@@ -279,13 +282,15 @@ public class MainViewController {
 				this.selectedDir = selectedNewDir;
 				this.selectedFile = new File(tbl_directory.getSelectionModel().getSelectedItem().getValue());
 				if(this.selectedFile.getName().contains(".conf")) {
+					this.showIndicator();
 					if(Files.lines(Paths.get(selectedNewDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
 						tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
 					}
 					else {
 						tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
 					}
-					lbl_changes.setVisible(false);
+					this.showIndicator();
+//					pi_load.setVisible(false);
 	//				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 				}
 			}
@@ -301,7 +306,7 @@ public class MainViewController {
 				System.out.println("No WS selected!");
 			}
 		} catch (Exception e) {
-			System.out.println("No WS selected!");
+			System.out.println("Error");
 		}
 		return;
 	}
@@ -451,5 +456,17 @@ public class MainViewController {
 	
 	public void setMainApp(Main mainApp) {
         this.mainApp = mainApp;
+	}
+	
+	public void showIndicator() {
+		Platform.runLater(new Runnable() {
+			@Override public void run() {
+				if(pi_load.isVisible()) {
+					pi_load.setVisible(false);
+				}else {
+					pi_load.setVisible(true);
+				}
+			}
+		});
 	}
 }

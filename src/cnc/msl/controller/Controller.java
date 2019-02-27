@@ -114,8 +114,8 @@ public class Controller {
 	        	else {
 		        	try {
 		        		line = lineString.split("=");
-		        		if(line[0].startsWith("\t#")) {
-			        		line = lineString.split("#");
+		        		if(line[0].replaceAll("/t", "").trim().startsWith("#")) {
+			        		line = lineString.replaceAll("/t", "").trim().split("#");
 //		        			key = "#Comment#";
 //			        		value = line[1].trim();
 			        		key = "";
@@ -141,6 +141,7 @@ public class Controller {
 			}
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
+			System.out.println("error in getNodeForElements");
 			e1.printStackTrace();
 		}
 
@@ -156,11 +157,13 @@ public class Controller {
 			return;
 		}
 	    try {
-	        BufferedWriter bw = new BufferedWriter(new FileWriter(selectedDir + File.separator + fileParts[0] + "-yaml.conf"));
+//	        BufferedWriter bw = new BufferedWriter(new FileWriter(selectedDir + File.separator + fileParts[0] + "-yaml.conf"));
+	        BufferedWriter bw = new BufferedWriter(new FileWriter(selectedDir + File.separator + fileName));
 	        bw.write("---" + System.lineSeparator());
 	        getNode(allNode.getRoot(), bw);
 			bw.close();
 	    } catch (IOException e) {
+	    	System.out.println("error in saveNodes");
 	        e.printStackTrace();
 	    }
 		return;
@@ -330,7 +333,9 @@ public class Controller {
 							lineItem = new TreeItem<>(new String[] {"#LINECOMMENT#", "#LINECOMMENT#", comment, ""});
 						}catch (Exception e) {
 							// TODO: handle exception
+							System.out.println("error comment");
 						}
+					System.out.println("COMMENT: " + comment);
 						item.getChildren().add(lineItem);
 						continue;
 					}
@@ -352,10 +357,12 @@ public class Controller {
 					if(listValue.toString().startsWith("[")) {
 						listValue = listValue.toString().replace("[", "").replace("]", "");
 						listValueLine = listValue.toString().split(",");
+						comment = "";
 						for (int i = 0; i < listValueLine.length; i++) {
 							if(listValueLine[i].toString().trim().equals("null")) {
 								line = new String[] {"#LINECOMMENT#", "#LINECOMMENT#"}; 
 								comment = commentList.get(commentIndex);
+								commentIndex++;
 							}else {
 								line = listValueLine[i].split(":");
 							}
@@ -464,30 +471,36 @@ public class Controller {
 				return "";
 			}
 			if(path.equals("")) {
-				path = "/" + newPath;
+				path = File.separator + newPath;
 			}
 			else if( path.contains(".conf")) {
 				path = newPath;
 			}
 			else {
-				path = newPath + "/" + path;
+				path = newPath + File.separator + path;
 			}
 		}
 		return path;
 	}
 	
 	public boolean convertAllFiles(File directory) throws IOException {
+		TreeTableView<String[]> tbl_elements = new TreeTableView<String[]>();
         for(File f : directory.listFiles()) {
             if(f.isDirectory()) { //Then we call the function recursively
             	convertAllFiles(f); 
             }else {
+            	if(!f.getName().endsWith(".conf")) {
+            		continue;
+            	}
             	if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
-					mainViewController.tbl_elements.setRoot(getYamlNodesFromFile(f,0, null).getKey());
-					saveNodesYaml(mainViewController.tbl_elements, f.getParentFile(), new File(f.getName()));
+//            		tbl_elements = new TreeTableView<String[]>();
+//            		tbl_elements.setRoot(getYamlNodesFromFile(f,0, null).getKey());
+//					saveNodesYaml(tbl_elements, f.getParentFile(), new File(f.getName()));
 				}
 				else {
-					mainViewController.tbl_elements.setRoot(getNodesForElements(f,0, null).getKey());
-					saveNodes(mainViewController.tbl_elements, f.getParentFile(), new File(f.getName()));
+					tbl_elements = new TreeTableView<String[]>();
+					tbl_elements.setRoot(getNodesForElements(f,0, null).getKey());
+					saveNodes(tbl_elements, f.getParentFile(), new File(f.getName()));
 				}
             }
         }
@@ -512,45 +525,33 @@ public class Controller {
             	if(mainViewController.selectedDir.equals(f.getParentFile()) || mainViewController.selectedDir.length() < f.getParentFile().length()) {
     				continue;
     			}
-            	if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
-            		InputStream targetStream = new FileInputStream(f);
-            		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
-            		try (Stream<String> stream = Files.lines(Paths.get(f.getPath()))) {
-    			        Object[] allLines = stream.toArray();
-    			        for (int i=0; i < allLines.length; i++) {
-    			        	if(parent.equals("") || parent == null) {
-    			        		continue;
-    			        	}
-    			        	if(allLines[i].toString().contains(parent)) {
-    			        		for (int j = i; j < allLines.length; j++) {
-    			        			if(!allLines[j].toString().endsWith(":")) {
-	    			        			tmp = allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
-	    			        			if(allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {
-	    			        				return "X";
-	    			        			}
-    			        			}
-								}
-//    			        		System.out.println("found");
-    			        	}
-//    			        	System.out.println(allLines[i]);
-    			        }
-            		}catch (Exception e) {
-						// TODO: handle exception
-					}
-//            		for (Map.Entry<String, Object> entry : result.entrySet())
-//            		{
-//            			for (int i = 0; i < Object[]entry.getValue(); i++) {
-//							
-//						}
-//            			System.out.println(entry.getValue());
-//            			System.out.println(entry.getKey());
-//            		}
-            		col = result.values();
-//            		Pair<TreeItem<String[]>, String> list  = getYamlNodesFromFile(f,0, null);
-					
-//				}
-//				else {
-//					getNodesForElements(f,0, null);
+            	try {
+            		if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
+                		InputStream targetStream = new FileInputStream(f);
+                		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
+                		try (Stream<String> stream = Files.lines(Paths.get(f.getPath()))) {
+        			        Object[] allLines = stream.toArray();
+        			        for (int i=0; i < allLines.length; i++) {
+        			        	if(parent.equals("") || parent == null) {
+        			        		continue;
+        			        	}
+        			        	if(allLines[i].toString().contains(parent)) {
+        			        		for (int j = i; j < allLines.length; j++) {
+        			        			if(!allLines[j].toString().endsWith(":")) {
+    	    			        			tmp = allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
+    	    			        			if(allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {
+    	    			        				return "X";
+    	    			        			}
+        			        			}
+    								}
+        			        	}
+        			        }
+                		}catch (Exception e) {
+    						// TODO: handle exception
+    					}
+    				}
+				} catch (Exception e) {
+					// TODO: handle exception
 				}
             }
         }
