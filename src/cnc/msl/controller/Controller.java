@@ -44,7 +44,7 @@ public class Controller {
 		TreeItem<String> tmp;
 		File allFiles[] = directory.listFiles();
 		Arrays.sort(allFiles);
-        for(File f : directory.listFiles()) {
+        for(File f : allFiles) {
             if(f.isDirectory()) { //Then we call the function recursively
             	tmp = getNodesForDirectory(f);
             	if(!tmp.getChildren().isEmpty()) {
@@ -52,7 +52,7 @@ public class Controller {
             	}
             } 
         }
-        for(File f : directory.listFiles()) {
+        for(File f : allFiles) {
             if(!f.isDirectory()) {
             	if(f.getName().endsWith(".conf")) {
             		root.getChildren().add(new TreeItem<String>(f.getName()));
