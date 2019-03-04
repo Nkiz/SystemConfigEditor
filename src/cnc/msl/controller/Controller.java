@@ -51,7 +51,7 @@ public class Controller {
         }
         for(File f : directory.listFiles()) {
             if(!f.isDirectory()) {
-            	if(f.getName().contains(".conf")) {
+            	if(f.getName().endsWith(".conf")) {
             		root.getChildren().add(new TreeItem<String>(f.getName()));
             	}
             }
@@ -123,6 +123,11 @@ public class Controller {
 			        		comment = line[1].trim();
 			        		//TODO: erst mal Comments raus
 //			        		continue;
+		        		}else if(line[1].replaceAll("/t", "").trim().contains("#")){
+		        			key = line[0].trim();
+		        			line = line[1].replaceAll("/t", "").trim().split("#",2);
+				        	value = line[0].trim();
+				        	comment = line[1].replaceAll("#", "").trim();
 		        		}else {
 			        		key = line[0].trim();
 				        	value = line[1].trim();
@@ -149,7 +154,7 @@ public class Controller {
     }
 	
 	public void saveNodes(TreeTableView<String[]> allNode, File selectedDir, File selectedFile){
-		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
+//		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
 		TreeItem<String[]> root	    =  allNode.getRoot();
 		String fileName				= selectedFile.getPath();
 		String [] fileParts			= fileName.split(".conf");
@@ -232,7 +237,7 @@ public class Controller {
 		Pair<TreeItem<String[]>, String> pair = null;
 		TreeItem<String[]> lineItem 	= null;
 		TreeItem<String[]> lineNode 	= null;
-		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
+//		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
 		Object yamlValue			= new Object();
 		Yaml yaml = new Yaml();
 		InputStream targetStream = new FileInputStream(file);
@@ -258,7 +263,7 @@ public class Controller {
 ////            }
 //        }
 
-		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getName(), "", "", ""});
+		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getAbsolutePath(), "", "", ""});
 		
 		try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
 	        Object[] allLines = stream.toArray();
@@ -335,7 +340,7 @@ public class Controller {
 							// TODO: handle exception
 							System.out.println("error comment");
 						}
-					System.out.println("COMMENT: " + comment);
+//					System.out.println("COMMENT: " + comment);
 						item.getChildren().add(lineItem);
 						continue;
 					}
@@ -368,7 +373,8 @@ public class Controller {
 							}
 							if(line.length == 2) {
 								try {
-									lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
+//									lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
+									lineItem = new TreeItem<>(new String[] {line[0], line[1], comment});
 								} catch (Exception e) {
 									// TODO: handle exception
 								}
@@ -388,7 +394,8 @@ public class Controller {
 					}
 					line = listValue.toString().split(":");
 					if(line.length == 2) {
-						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
+//						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
+						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment});
 						item.getChildren().add(lineItem);
 					}else {
 						item.getChildren().add(getNodesFromYaml(line[0],listValue, file));
@@ -400,7 +407,7 @@ public class Controller {
 	}
 	
 	public Pair<TreeItem<String[]>, String> getNodesFromYaml2(TreeItem<String[]> node,  BufferedWriter bw, int index) throws IOException {
-		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
+//		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
 		Object yamlValue			= new Object();
 		Yaml yaml = new Yaml();
 		YamlDynamicValue<String> yamlClassValue = new YamlDynamicValue<String>();
@@ -506,7 +513,7 @@ public class Controller {
         }
 		return true;
 	}
-	public String checkOverwrite(File file, String parent, String key) throws IOException {
+	public boolean checkOverwrite(File file, String key) throws IOException {
 		File tmpFile = file;
 		Yaml yaml = new Yaml();
 		Collection<Object> col = null;
@@ -518,13 +525,27 @@ public class Controller {
 		}
 		for(File f : tmpFile.listFiles()) {
             if(f.isDirectory()) { //Then we call the function recursively
-            	if(checkOverwrite(f,parent, key) == "X") {
-            		return "X";
+//            	System.out.println(mainViewController.selectedFile);
+//        		System.out.println("FOLDER: " + f.getPath());
+            	if(checkOverwrite(f,key)) {
+            		return true;
             	} 
             }else {
-            	if(mainViewController.selectedDir.equals(f.getParentFile()) || mainViewController.selectedDir.length() < f.getParentFile().length()) {
-    				continue;
-    			}
+//            	System.out.println("FILE: " + f.getName());
+            	if(!f.getName().equals(mainViewController.selectedFile.getName())) {
+            		//System.out.println("Selected " + mainViewController.selectedFile + "=!" + f.getName());
+            		continue;
+            	}else {
+//            		System.out.println("Find other " + f.getName());
+            	}
+//            	if(key.equals("MaxPWM")) {
+//            		System.out.println(key);
+//            	}
+            	System.out.println("Sel. Dir: " + mainViewController.selectedDir);
+            	System.out.println("Loop Dir: "+ f.getParentFile());
+//            	if(mainViewController.selectedDir.length() >= f.getParentFile().length()) {
+//    				continue;
+//    			}
             	try {
             		if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
                 		InputStream targetStream = new FileInputStream(f);
@@ -532,29 +553,31 @@ public class Controller {
                 		try (Stream<String> stream = Files.lines(Paths.get(f.getPath()))) {
         			        Object[] allLines = stream.toArray();
         			        for (int i=0; i < allLines.length; i++) {
-        			        	if(parent.equals("") || parent == null) {
-        			        		continue;
-        			        	}
-        			        	if(allLines[i].toString().contains(parent)) {
-        			        		for (int j = i; j < allLines.length; j++) {
-        			        			if(!allLines[j].toString().endsWith(":")) {
-    	    			        			tmp = allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
-    	    			        			if(allLines[j].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {
-    	    			        				return "X";
-    	    			        			}
-        			        			}
-    								}
-        			        	}
+//        			        	if(allLines[i].toString().contains(parent)) {
+//        			        		for (int j = i; j < allLines.length; j++) {
+        			        	if(!allLines[i].toString().endsWith(":")) {
+				        			tmp = allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
+				        			if(allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {
+				        				if(!mainViewController.selectedDir.equals(f.getParentFile())) {
+//				        					System.out.println("X: " + f.getPath());
+				        					return true;
+				        				}else {
+//				        					System.out.println("SAME FILE");
+				        				}
+				        			}
+			        			}
+//    								}
+//        			        	}
         			        }
                 		}catch (Exception e) {
-    						// TODO: handle exception
+    						return false;
     					}
     				}
 				} catch (Exception e) {
-					// TODO: handle exception
+					return false;
 				}
             }
         }
-		return "";
+		return false;
 	}
 }

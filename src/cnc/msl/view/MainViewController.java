@@ -52,7 +52,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Callback;
 import javafx.util.Pair;
-
+import javafx.util.converter.DefaultStringConverter;
 import cnc.msl.controller.FileSystemEventHandler;
 
 public class MainViewController {
@@ -62,7 +62,7 @@ public class MainViewController {
 	private File selectedNewDir = new File("");
 //	private File selectedDir = new File("C:\\Users\\nkiz_x240\\Desktop\\SystemConfig\\cnc-msl-master\\etc");
 //	private File selectedNewDir = new File("C:\\Users\\nkiz_x240\\Desktop\\SystemConfig\\cnc-msl-master\\etc");
-	private File selectedFile;
+	public File selectedFile;
 	private Controller controller = new Controller(this);
 	private ObservableList<String[]> items = FXCollections.observableArrayList();
 	private FileSystemEventHandler fileSystemEventHandler = new FileSystemEventHandler(controller);
@@ -164,7 +164,7 @@ public class MainViewController {
         TreeTableColumn<String[],String> elemColumn = new TreeTableColumn<>("Key");
         TreeTableColumn<String[],String> valueColumn = new TreeTableColumn<>("Value");
         TreeTableColumn<String[],String> commentColumn = new TreeTableColumn<>("Comment");
-        TreeTableColumn<String[],String> overwirteColumn = new TreeTableColumn<>("OV");
+//        TreeTableColumn<String[],String> overwirteColumn = new TreeTableColumn<>("OV");
         
      
         //Defining cell content
@@ -173,51 +173,60 @@ public class MainViewController {
         elemColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
         	new ReadOnlyStringWrapper(p.getValue().getValue()[0])); 
         commentColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
-    	new ReadOnlyStringWrapper(p.getValue().getValue()[2])); 
-        overwirteColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
-    	new ReadOnlyStringWrapper(p.getValue().getValue()[3])); 
+    		new ReadOnlyStringWrapper(p.getValue().getValue()[2])); 
+//        overwirteColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
+//    	new ReadOnlyStringWrapper(p.getValue().getValue()[3])); 
         
         valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         elemColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         commentColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
 //        overwirteColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
-
-         overwirteColumn.setCellFactory(new Callback<TreeTableColumn<String[], String>, TreeTableCell<String[], String>>() {
+        
+        elemColumn.setCellFactory(new Callback<TreeTableColumn<String[],String>, TreeTableCell<String[],String>>() {
             @Override
-            public TreeTableCell<String[], String> call(TreeTableColumn<String[], String> param) {
-                return new TreeTableCell<String[], String>() {
+            public TextFieldTreeTableCell<String[], String> call(TreeTableColumn<String[], String> param) {
+                return new TextFieldTreeTableCell<String[], String>(new DefaultStringConverter()) {
 
                     @Override
                     public void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (!isEmpty()) {
-//                            this.setTextFill(Color.RED);
-                            // Get fancy and change color based on data
-                            if(item.equals("X")) {
-//                                this.setTextFill(Color.RED);
-                                BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
-                                this.setBackground(new Background(fill));
-                            }else{
-                            	BackgroundFill fill = new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY);
-                                this.setBackground(new Background(fill));
-                            }
-                            setText(item);
+//                        if(item != null) {
+                        	super.updateItem(item, empty);
+                            try {
+                            	if (!isEmpty() && !item.isEmpty() && !item.endsWith(".conf") && !item.equals("#LINECOMMENT#")) {
+                                    try {
+        								if(controller.checkOverwrite(selectedFile.getParentFile(), item)) {
+//                                        this.setTextFill(Color.RED);
+        								    BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
+        								    this.setBackground(new Background(fill));
+        								}else{
+        									BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+        								    this.setBackground(new Background(fill));
+        								}
+        							} catch (IOException e) {
+        								// TODO Auto-generated catch block
+        								e.printStackTrace();
+        							}
+                                    setText(item);
 
-                        }else {
-                        	BackgroundFill fill = new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY);
-                            this.setBackground(new Background(fill));
-                            setText(item);
+                                }else {
+                                	BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+                                    this.setBackground(new Background(fill));
+                                    setText(item);
+                                }
+    						} catch (Exception e) {
+    							BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+                                this.setBackground(new Background(fill));
+                                setText(item);
+    						}
                         }
-                    }
+                    	
+//                    }
 
                 };
             }
         });
         
         valueColumn.setOnEditCommit((CellEditEvent<String[], String> t) -> {
-        	TreeItem<String[]> selItem = new TreeItem<>();
-        	TreeItem<String[]> rowItem = new TreeItem<>();
-        	rowItem = t.getRowValue();
         	String[] newValue = t.getRowValue().getValue();
         	newValue[1] = t.getNewValue();
             ( t.getTreeTableView().getTreeItem(t.getTreeTablePosition().getRow())).setValue(newValue);
@@ -225,7 +234,6 @@ public class MainViewController {
         });
         
         elemColumn.setOnEditCommit((CellEditEvent<String[], String> t) -> {
-        	TreeItem<String[]> selItem = new TreeItem<>();
         	TreeItem<String[]> rowItem = new TreeItem<>();
         	rowItem = t.getRowValue();
         	if(rowItem.getValue()[0].contains(".conf")) {
@@ -240,9 +248,6 @@ public class MainViewController {
         });
         
         commentColumn.setOnEditCommit((CellEditEvent<String[], String> t) -> {
-        	TreeItem<String[]> selItem = new TreeItem<>();
-        	TreeItem<String[]> rowItem = new TreeItem<>();
-        	rowItem = t.getRowValue();
         	String[] newValue3 = t.getRowValue().getValue();
         	newValue3[2] = t.getNewValue();
             ( t.getTreeTableView().getTreeItem(t.getTreeTablePosition().getRow())).setValue(newValue3);
@@ -252,14 +257,15 @@ public class MainViewController {
         tbl_elements.getColumns().add(elemColumn);
         tbl_elements.getColumns().add(valueColumn);
         tbl_elements.getColumns().add(commentColumn);
-        tbl_elements.getColumns().add(overwirteColumn);
+//        tbl_elements.getColumns().add(overwirteColumn);
         tbl_elements.setEditable(true);
         
         tbl_elements.widthProperty().addListener((obs, oldVal, newVal) -> {
         	elemColumn.setPrefWidth((double)newVal/3);
         	valueColumn.setPrefWidth((double)newVal/3);
-        	commentColumn.setPrefWidth((double)newVal/4 + (double)newVal/24);
-        	overwirteColumn.setPrefWidth((double)newVal/24);
+        	commentColumn.setPrefWidth((double)newVal/3);
+//        	commentColumn.setPrefWidth((double)newVal/4 + (double)newVal/24);
+//        	overwirteColumn.setPrefWidth((double)newVal/24);
         });
         
         vbox_main.heightProperty().addListener((obs, oldVal, newVal) -> {
@@ -270,7 +276,11 @@ public class MainViewController {
         	btnbar.setPrefWidth((double)newVal);
         	btnbar.setMaxWidth((double)newVal);
         	btnbar.setMinWidth((double)newVal);
-        	img_logo.translateXProperty().set(770 - (double)newVal);
+        	if((double)newVal >=860) {
+        		img_logo.translateXProperty().set(860 - (double)newVal);
+        	}else {
+        		img_logo.translateXProperty().set((double)0);
+        	}
         });
 	}
 	

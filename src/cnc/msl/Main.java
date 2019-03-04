@@ -51,7 +51,7 @@ public class Main extends Application {
             mainStage.setScene(scene);
             
             mainStage.getIcons().add(new Image("cnc/msl/images/vs-color.png"));
-            mainStage.setTitle("cnc.msl.Main");
+            mainStage.setTitle("SystemConfig Editor");
             mainStage.show();
             
         } catch (IOException e) {
