@@ -35,7 +35,7 @@ import javafx.util.Pair;
 import cnc.msl.view.MainViewController;
 
 public class Controller {
-	private MainViewController mainViewController;
+	public MainViewController mainViewController;
 	public Controller(MainViewController mainViewController) {
 		this.mainViewController = mainViewController;
 	}

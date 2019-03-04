@@ -52,7 +52,6 @@
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="100.0">
                      <children>
                         <TreeTableView fx:id="tbl_elements" maxHeight="0.0" minHeight="0.0" prefHeight="573.0" prefWidth="838.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                        <ProgressIndicator fx:id="pi_load" visible="false" />
                      </children>
                   </AnchorPane>
               </items>
@@ -67,6 +66,7 @@
                         <Rectangle2D />
                      </viewport>
                   </ImageView>
+                  <ProgressIndicator fx:id="pi_load" visible="true" />
                   <Label id="lbl_changes" fx:id="lbl_changes" text="unsaved changes" textFill="#eb0909" visible="false" />
                   <Button fx:id="btn_del" cancelButton="true" mnemonicParsing="false" onAction="#delLine" text="-" />
                   <Button fx:id="btn_add" cancelButton="true" mnemonicParsing="false" onAction="#addLine" text="+" />

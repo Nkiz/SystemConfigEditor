@@ -54,6 +54,7 @@ import javafx.util.Callback;
 import javafx.util.Pair;
 import javafx.util.converter.DefaultStringConverter;
 import cnc.msl.controller.FileSystemEventHandler;
+import cnc.msl.controller.ProgressEventHandler;
 
 public class MainViewController {
 	private Main mainApp;
@@ -66,6 +67,8 @@ public class MainViewController {
 	private Controller controller = new Controller(this);
 	private ObservableList<String[]> items = FXCollections.observableArrayList();
 	private FileSystemEventHandler fileSystemEventHandler = new FileSystemEventHandler(controller);
+	private ProgressEventHandler progressEventHandler = new ProgressEventHandler(controller);
+	public boolean isLoading = false;
 	
 	@FXML
 	public TreeTableView<String> tbl_directory;
@@ -101,6 +104,7 @@ public class MainViewController {
 		this.initElementsList();
 //		fileSystemEventHandler = new FileSystemEventHandler(controller);
         new Thread(fileSystemEventHandler).start();
+        new Thread(progressEventHandler).start();
 	}
 	
 	@FXML
@@ -289,18 +293,18 @@ public class MainViewController {
 	private void handleSelectFile(MouseEvent event) throws IOException {
 		if (event.getClickCount() == 2) {
 			if(tbl_directory.getSelectionModel().getSelectedItem() != null) {
+				this.isLoading = true;
 				selectedNewDir = new File(selectedWs + controller.getPath(tbl_directory.getSelectionModel().getSelectedItem(), ""));
 				this.selectedDir = selectedNewDir;
 				this.selectedFile = new File(tbl_directory.getSelectionModel().getSelectedItem().getValue());
 				if(this.selectedFile.getName().contains(".conf")) {
-					this.showIndicator();
 					if(Files.lines(Paths.get(selectedNewDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
 						tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
 					}
 					else {
 						tbl_elements.setRoot(controller.getNodesForElements(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
 					}
-					this.showIndicator();
+					this.isLoading = false;
 //					pi_load.setVisible(false);
 	//				controller.getNodesForElementsFromYaml(new File(this.selectedDir + "/" + this.selectedFile),0, null);
 				}
@@ -312,6 +316,7 @@ public class MainViewController {
 		try {
 			if(!selectedWs.toPath().toString().equals("")) {
 				System.out.println("Convert All Files");
+				this.isLoading = true;
 				controller.convertAllFiles(selectedWs);
 			}else {
 				System.out.println("No WS selected!");
@@ -319,6 +324,7 @@ public class MainViewController {
 		} catch (Exception e) {
 			System.out.println("Error");
 		}
+		this.isLoading = false;
 		return;
 	}
 	@FXML
