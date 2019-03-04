@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +42,8 @@ public class Controller {
 	public TreeItem<String> getNodesForDirectory(File directory) { //Returns a TreeItem representation of the specified directory
 		TreeItem<String> root = new TreeItem<String>(directory.getName());
 		TreeItem<String> tmp;
+		File allFiles[] = directory.listFiles();
+		Arrays.sort(allFiles);
         for(File f : directory.listFiles()) {
             if(f.isDirectory()) { //Then we call the function recursively
             	tmp = getNodesForDirectory(f);
@@ -183,7 +186,7 @@ public class Controller {
 		}
 		if(node.getValue()[0].contains("[") || node.getValue()[0].contains(".conf")){
 			for (int i = 0; i < node.getChildren().size(); i++) {
-				System.out.println(node.getChildren().get(i).getValue()[0] + node.getChildren().get(i).getValue()[1] + node.getChildren().get(i).getValue()[2] );
+//				System.out.println(node.getChildren().get(i).getValue()[0] + node.getChildren().get(i).getValue()[1] + node.getChildren().get(i).getValue()[2] );
 				if((node.getChildren().get(i).getValue()[0].contains("[") && node.getChildren().get(i).getValue()[0] !=null)) {
 					if(node.getValue()[0].contains(".conf")) {
 						yamlClassRootNode.addKey(node.getChildren().get(i).getValue()[0].replace("[", "").replace("]", ""));
@@ -242,26 +245,6 @@ public class Controller {
 		Yaml yaml = new Yaml();
 		InputStream targetStream = new FileInputStream(file);
 		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
-//		Reader reader = new FileReader(file);
-//		Iterable<Event> events = yaml.parse(reader);
-//	    for (Event evt : events) {
-//	    	System.out.println("Typ: " + evt.getClass());
-//	    	System.out.println(evt.getStartMark().get_snippet());
-//	    	System.out.println("Line: " + evt.getStartMark().getLine());
-////            if (evt instanceof MappingStartEvent) {
-////                System.out.println("Test");
-////            } else if (evt instanceof MappingEndEvent) {
-////            	System.out.println("Test");
-////            } else if (evt instanceof SequenceStartEvent) {
-////            	System.out.println("Test");
-////            } else if (evt instanceof SequenceEndEvent) {
-////            	System.out.println("Test");
-////            } else if (evt instanceof ScalarEvent) {
-////            	System.out.println("Test");
-////            } else if (evt instanceof AliasEvent) {
-////            	System.out.println("Test");
-////            }
-//        }
 
 		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getAbsolutePath(), "", "", ""});
 		
@@ -520,10 +503,11 @@ public class Controller {
 		Map<String, String> linkedHashMap = new LinkedHashMap<String, String>();
 		String tmp = "";
 		if(tmpFile == null) {
-			tmpFile = mainViewController.selectedWs;
+			tmpFile = mainViewController.selectedDir;
 //			return "X";
 		}
 		for(File f : tmpFile.listFiles()) {
+//			System.out.println("Path: " + f.getPath() + f);
             if(f.isDirectory()) { //Then we call the function recursively
 //            	System.out.println(mainViewController.selectedFile);
 //        		System.out.println("FOLDER: " + f.getPath());
@@ -541,8 +525,8 @@ public class Controller {
 //            	if(key.equals("MaxPWM")) {
 //            		System.out.println(key);
 //            	}
-            	System.out.println("Sel. Dir: " + mainViewController.selectedDir);
-            	System.out.println("Loop Dir: "+ f.getParentFile());
+//            	System.out.println("Sel. Dir: " + mainViewController.selectedDir);
+//            	System.out.println("Loop Dir: "+ f.getParentFile());
 //            	if(mainViewController.selectedDir.length() >= f.getParentFile().length()) {
 //    				continue;
 //    			}

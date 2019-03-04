@@ -194,7 +194,8 @@ public class MainViewController {
                             try {
                             	if (!isEmpty() && !item.isEmpty() && !item.endsWith(".conf") && !item.equals("#LINECOMMENT#")) {
                                     try {
-        								if(controller.checkOverwrite(selectedFile.getParentFile(), item)) {
+                                    	//System.out.println(selectedFile.getParentFile());
+        								if(controller.checkOverwrite(null, item)) {
 //                                        this.setTextFill(Color.RED);
         								    BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
         								    this.setBackground(new Background(fill));

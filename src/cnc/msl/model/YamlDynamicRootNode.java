@@ -33,7 +33,7 @@ public class YamlDynamicRootNode<ClassTyp>{
 	  if(comment != "" || comment == null ) {
 		  return key + ":" + value + " #" + comment + System.lineSeparator();
 	  }else {   
-		  return key + ":" + value + System.lineSeparator();
+		  return key.toString().trim() + ":" + value + System.lineSeparator();
 	  }
    } 
    
