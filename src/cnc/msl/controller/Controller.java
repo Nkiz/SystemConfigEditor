@@ -258,8 +258,8 @@ public class Controller {
 		TreeItem<String[]> lineNode 	= null;
 //		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
 		Object yamlValue			= new Object();
-		LoaderOptions options = new LoaderOptions();
-        options.setReadComments(true);
+//		LoaderOptions options = new LoaderOptions();
+//        options.setReadComments(true);
 //		Yaml yaml = new Yaml(options);
 		Yaml yaml = new Yaml();
 //		InputStream targetStream = new FileInputStream(file);
