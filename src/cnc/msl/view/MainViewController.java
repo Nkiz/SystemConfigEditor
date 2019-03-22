@@ -5,13 +5,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+//import com.fasterxml.jackson.databind.ObjectMapper;
+//import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import cnc.msl.Main;
 import cnc.msl.controller.Controller;
@@ -42,6 +44,7 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -87,9 +90,13 @@ public class MainViewController {
 	@FXML
 	Label lbl_changes;
 	@FXML
+	public Label lbl_load;
+	@FXML
 	ButtonBar btnbar;
 	@FXML
-	VBox vbox_main;
+	public AnchorPane ap_table;
+	@FXML
+	public VBox vbox_main;
 	@FXML
 	SplitPane sp_main;
 	@FXML
@@ -103,9 +110,10 @@ public class MainViewController {
 //		this.loadDirectoryList();
 		this.initElementsList();
 //		fileSystemEventHandler = new FileSystemEventHandler(controller);
-        new Thread(fileSystemEventHandler).start();
+		new Thread(fileSystemEventHandler).start();
         new Thread(progressEventHandler).start();
 	}
+
 	
 	@FXML
 	private void handleChooseWs(ActionEvent event) throws IOException {
@@ -178,55 +186,37 @@ public class MainViewController {
         	new ReadOnlyStringWrapper(p.getValue().getValue()[0])); 
         commentColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
     		new ReadOnlyStringWrapper(p.getValue().getValue()[2])); 
-//        overwirteColumn.setCellValueFactory((CellDataFeatures<String[], String> p) -> 
-//    	new ReadOnlyStringWrapper(p.getValue().getValue()[3])); 
-        
-        valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+
         elemColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         commentColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
-//        overwirteColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+
         
-        elemColumn.setCellFactory(new Callback<TreeTableColumn<String[],String>, TreeTableCell<String[],String>>() {
+        valueColumn.setCellFactory(new Callback<TreeTableColumn<String[],String>, TreeTableCell<String[],String>>() {
             @Override
             public TextFieldTreeTableCell<String[], String> call(TreeTableColumn<String[], String> param) {
                 return new TextFieldTreeTableCell<String[], String>(new DefaultStringConverter()) {
 
-                    @Override
-                    public void updateItem(String item, boolean empty) {
+                @Override
+                public void updateItem(String item, boolean empty) {
 //                        if(item != null) {
-                        	super.updateItem(item, empty);
-                            try {
-                            	if (!isEmpty() && !item.isEmpty() && !item.endsWith(".conf") && !item.equals("#LINECOMMENT#")) {
-                                    try {
-                                    	//System.out.println(selectedFile.getParentFile());
-        								if(controller.checkOverwrite(null, item)) {
-//                                        this.setTextFill(Color.RED);
-        								    BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
-        								    this.setBackground(new Background(fill));
-        								}else{
-        									BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
-        								    this.setBackground(new Background(fill));
-        								}
-        							} catch (IOException e) {
-        								// TODO Auto-generated catch block
-        								e.printStackTrace();
-        							}
-                                    setText(item);
-
-                                }else {
-                                	BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
-                                    this.setBackground(new Background(fill));
-                                    setText(item);
-                                }
-    						} catch (Exception e) {
-    							BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+                    	super.updateItem(item, empty);
+                        try {
+                        	if(item.contains("(<X>)")){
+                        		item = item.replace("(<X>)", "");
+                        		setText(item);
+                        		BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
+							    this.setBackground(new Background(fill));
+                            }else {
+                            	BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
                                 this.setBackground(new Background(fill));
                                 setText(item);
-    						}
-                        }
-                    	
-//                    }
-
+                            }
+						} catch (Exception e) {
+							BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+                            this.setBackground(new Background(fill));
+                            setText(item);
+						}
+                    }
                 };
             }
         });
@@ -291,6 +281,7 @@ public class MainViewController {
 	
 	@FXML
 	private void handleSelectFile(MouseEvent event) throws IOException {
+		Charset charset = Charset.defaultCharset();  
 		if (event.getClickCount() == 2) {
 			if(tbl_directory.getSelectionModel().getSelectedItem() != null) {
 				this.isLoading = true;
@@ -298,7 +289,11 @@ public class MainViewController {
 				this.selectedDir = selectedNewDir;
 				this.selectedFile = new File(tbl_directory.getSelectionModel().getSelectedItem().getValue());
 				if(this.selectedFile.getName().contains(".conf")) {
-					if(Files.lines(Paths.get(selectedNewDir + "/" + this.selectedFile)).toArray()[0].equals("---")) {
+//					String test1 = selectedNewDir + File.separator + this.selectedFile;
+//					Path test2 = Paths.get(test1);
+//					Object [] test3 = Files.lines(test2, charset).toArray();
+//					
+					if(Files.lines(Paths.get(selectedNewDir + File.separator + this.selectedFile), charset).toArray()[0].equals("---")) {
 						tbl_elements.setRoot(controller.getYamlNodesFromFile(new File(this.selectedNewDir + "/" + this.selectedFile),0, null).getKey());
 					}
 					else {
@@ -475,15 +470,15 @@ public class MainViewController {
         this.mainApp = mainApp;
 	}
 	
-	public void showIndicator() {
-		Platform.runLater(new Runnable() {
-			@Override public void run() {
-				if(pi_load.isVisible()) {
-					pi_load.setVisible(false);
-				}else {
-					pi_load.setVisible(true);
-				}
-			}
-		});
-	}
+//	public void showIndicator() {
+//		Platform.runLater(new Runnable() {
+//			@Override public void run() {
+//				if(pi_load.isVisible()) {
+//					pi_load.setVisible(false);
+//				}else {
+//					pi_load.setVisible(true);
+//				}
+//			}
+//		});
+//	}
 }

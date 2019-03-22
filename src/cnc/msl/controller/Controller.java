@@ -1,5 +1,6 @@
 package cnc.msl.controller;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,7 +9,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -19,11 +22,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
+
 //import com.amihaiemil.eoyaml.Yaml;
 
+//import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.Yaml;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+//import com.fasterxml.jackson.databind.ObjectMapper;
+//import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.representer.Representer;
+import org.yaml.snakeyaml.resolver.Resolver;
 
 import cnc.msl.model.YamlDynamicNode;
 import cnc.msl.model.YamlDynamicRootNode;
@@ -36,6 +46,7 @@ import cnc.msl.view.MainViewController;
 
 public class Controller {
 	public MainViewController mainViewController;
+	public Charset charset = Charset.defaultCharset(); 
 	public Controller(MainViewController mainViewController) {
 		this.mainViewController = mainViewController;
 	}
@@ -79,7 +90,7 @@ public class Controller {
 			lineNode = node;
 		}
 		
-		try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
+		try (Stream<String> stream = Files.lines(Paths.get(file.getPath()),charset)) {
 	        Object[] allLines = stream.toArray();
 	        // read File
 	        for (int i=index; i < allLines.length; i++) {
@@ -118,7 +129,7 @@ public class Controller {
 		        	try {
 		        		line = lineString.split("=");
 		        		if(line[0].replaceAll("/t", "").trim().startsWith("#")) {
-			        		line = lineString.replaceAll("/t", "").trim().split("#");
+			        		line = lineString.replaceAll("/t", "").trim().split("#", 2);
 //		        			key = "#Comment#";
 //			        		value = line[1].trim();
 			        		key = "";
@@ -186,7 +197,6 @@ public class Controller {
 		}
 		if(node.getValue()[0].contains("[") || node.getValue()[0].contains(".conf")){
 			for (int i = 0; i < node.getChildren().size(); i++) {
-//				System.out.println(node.getChildren().get(i).getValue()[0] + node.getChildren().get(i).getValue()[1] + node.getChildren().get(i).getValue()[2] );
 				if((node.getChildren().get(i).getValue()[0].contains("[") && node.getChildren().get(i).getValue()[0] !=null)) {
 					if(node.getValue()[0].contains(".conf")) {
 						yamlClassRootNode.addKey(node.getChildren().get(i).getValue()[0].replace("[", "").replace("]", ""));
@@ -194,6 +204,9 @@ public class Controller {
 						yamlClassRootNode.addComment(node.getChildren().get(i).getValue()[2]);
 						bw.write(yamlClassRootNode.toString());
 					}else {
+						if(node.getChildren().get(i).getValue()[0].trim() == null || node.getChildren().get(i).getValue()[0].trim() == "") {
+							continue;
+						}
 						yamlClassNode.addKey(node.getChildren().get(i).getValue()[0].replace("[", "").replace("]", "").replace("\t", ""));
 						yamlClassNode.addValue(node.getChildren().get(i).getValue()[1]);
 						yamlClassNode.addComment(node.getChildren().get(i).getValue()[2]);
@@ -201,6 +214,9 @@ public class Controller {
 					}
 				}
 				tmpValue = getNode(node.getChildren().get(i),bw);
+				if(tmpValue.trim().equals("- :")) {
+					continue;
+				}
 				if(!tmpValue.contains("null")) {
 //					if(!node.getParent().getValue()[0].contains(".conf")) {
 					if(node.getParent().getValue()[0].contains("[")) {
@@ -208,8 +224,8 @@ public class Controller {
 					}
 					if(tmpValue.contains("- : #")) {
 //						tmpValue = tmpValue.replaceAll("- : ", "- LINECOMMENT:/*");
-						tmpValue = tmpValue.replaceAll("- : ", "- #LINECOMMENT# : #LINECOMMENT# ");
-//						tmpValue = tmpValue.replaceAll("- : ", "");
+//						tmpValue = tmpValue.replaceAll("- : ", "- #LINECOMMENT# : #LINECOMMENT# ");
+						tmpValue = tmpValue.replaceAll("- : ", "");
 					}
 					bw.write(tmpValue);
 				}
@@ -242,13 +258,20 @@ public class Controller {
 		TreeItem<String[]> lineNode 	= null;
 //		ObjectMapper mapper 		= new ObjectMapper(new YAMLFactory());
 		Object yamlValue			= new Object();
+		LoaderOptions options = new LoaderOptions();
+        options.setReadComments(true);
+//		Yaml yaml = new Yaml(options);
 		Yaml yaml = new Yaml();
-		InputStream targetStream = new FileInputStream(file);
-		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
+//		InputStream targetStream = new FileInputStream(file);
+		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+//		System.out.println(targetStream);
+		@SuppressWarnings("unchecked")
+		Map<String,Object> result = (Map<String,Object>)yaml.load(in);
+//		Iterable<Object> result = yaml.loadAll(in);
 
 		TreeItem<String[]> root 		= new TreeItem<>(new String[] {file.getAbsolutePath(), "", "", ""});
 		
-		try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
+		try (Stream<String> stream = Files.lines(Paths.get(file.getPath()),charset)) {
 	        Object[] allLines = stream.toArray();
 		}catch (Exception e) {
 			// TODO: handle exception
@@ -270,103 +293,95 @@ public class Controller {
 		String[] line				= null;
 		String[] listValueLine		= null;
 		TreeItem<String[]> lineItem 	= null;
+		TreeItem<String[]> lineItemComment 	= null;
 		ArrayList<Object> list;
 		ArrayList<Object> listTmp = null;
 		ArrayList<String> commentList = new ArrayList<String>();
 		boolean isNode				= false;
 		String lineString			= "";
+		String lastLineString			= "";
+		String nextLineString			= "";
 		String lineStringTmp		= "";
 		Pair<TreeItem<String[]>, String> pair = null;
 		String comment				= "";
+		String lastComment				= "";
 		int commentIndex			= 0;
+		Object object				= null;
+		Object objectNext    		= null;
+		Object objectLast			= null;
+		String overwrite			= "";
+		
 		
 		if(!map_value.equals(null)) {
 			if(map_value.getClass().equals(java.util.ArrayList.class)) {
 				comment = "";
-				try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
-			        Object[] allLines = stream.toArray();
-			        for (int i=0; i < allLines.length; i++) {
-//			        	index = i;
-			        	Object object = allLines[i];
-			        	lineString = object.toString();
-			        	lineStringTmp = lineString.replaceAll("- ", "").replaceAll(":", "").trim();
-			        	if(lineStringTmp.equals(map_key)) {
-			        		commentIndex = 0;
-			        		commentList.clear();
-			        	}
-			        	if(lineString.contains("- #LINECOMMENT#")) {
-//			        		if(!lineString.split(":")[1].contains("#LINECOMMENT#")){
-			        			commentList.add(lineString.split(":")[1].replaceAll("#LINECOMMENT#", "").replaceAll("#", "").trim());
-//			        		}else {
-//			        			commentList.add(lineString.split(":")[1]);
-//			        		}
-			        	}
-			        	if(lineString.contains(map_key + ":")) {
-			        		if(lineString.contains("#")) {
-			        			item.setValue(new String[] {map_key, "", lineString.split("#")[1].toString()});
-			        			break;
-			        		}
-			        	}
-					}
-				}catch (Exception e) {
-					// TODO: handle exception
-				}
 				list = (ArrayList<Object>) map_value;
 				for(Object listValue:list) {
 					comment = "";
-					if(listValue == null) {
-						comment = commentList.get(commentIndex);
-						++commentIndex;
-						try {
-							lineItem = new TreeItem<>(new String[] {"#LINECOMMENT#", "#LINECOMMENT#", comment, ""});
-						}catch (Exception e) {
-							// TODO: handle exception
-							System.out.println("error comment");
-						}
-//					System.out.println("COMMENT: " + comment);
-						item.getChildren().add(lineItem);
-						continue;
-					}
-					try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
-				        Object[] allLines = stream.toArray();
-				        for (int i=0; i < allLines.length; i++) {
-//				        	index = i;
-				        	Object object = allLines[i];
-				        	lineString = object.toString();
-				        	if(lineString.contains(listValue.toString())) {
-				        		if(lineString.contains("#")) {
-				        			comment = lineString.split("#")[1];
-				        			break;
-				        		}
-				        	}
-						}
-					}catch (Exception e) {
-					}
 					if(listValue.toString().startsWith("[")) {
 						listValue = listValue.toString().replace("[", "").replace("]", "");
 						listValueLine = listValue.toString().split(",");
 						comment = "";
 						for (int i = 0; i < listValueLine.length; i++) {
-							if(listValueLine[i].toString().trim().equals("null")) {
-								line = new String[] {"#LINECOMMENT#", "#LINECOMMENT#"}; 
-								comment = commentList.get(commentIndex);
-								commentIndex++;
-							}else {
-								line = listValueLine[i].split(":");
-							}
+							comment = "";
+							line = listValueLine[i].trim().split(":");
 							if(line.length == 2) {
-								try {
-//									lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
-									lineItem = new TreeItem<>(new String[] {line[0], line[1], comment});
-								} catch (Exception e) {
-									// TODO: handle exception
+									try (Stream<String> stream = Files.lines(Paths.get(file.getPath()),charset)) {
+								        Object[] allLines = stream.toArray();
+										for (int j=0; j < allLines.length; j++) {
+											object = allLines[j];
+											lineString = object.toString();
+											if(lineString.trim().startsWith("#")){
+												if(j > 0) {
+													lastLineString = allLines[j-1].toString();
+												}else {
+													lastLineString = "";
+												}
+												if(j+1 < allLines.length) {
+													nextLineString = allLines[j+1].toString();
+												}else {
+													nextLineString = "";
+												}
+												if(nextLineString.contains(line[0] + ":" + line[1]) && !lastComment.equals(lineString)) {
+//													System.out.println("1:" + lineString);
+//													System.out.println("");
+													lastComment = lineString;
+													item.getChildren().add(new TreeItem<>(new String[] {"*COMMENT*", "*COMMENT*", lineString.replaceAll("#", "").trim()}));
+												}else if(lastLineString.contains(line[0] + ":" + line[1]) && !lastComment.equals(lineString)) {
+//													System.out.println("2:" + lineString);
+//													System.out.println("");
+													lastComment = lineString;
+													lineItemComment = new TreeItem<>(new String[] {"*COMMENT*", "*COMMENT*", lineString.replaceAll("#", "").trim()});
+//													item.getChildren().add();
+												}
+											}
+											if(lineString.replaceAll("-","").trim().contains(line[0] + ":" + line[1])) {
+												comment = lineString.replaceAll("-","").trim().split("#",2)[1];
+//												break;
+											}
+										}
+									}catch (Exception e) {
+										
+									}
+								if(!line[0].equals("null")) {
+									if(checkOverwrite(null, line[0])) {
+										overwrite = "(<X>)";
+									}else {
+										overwrite = "";
+									}
+									lineItem = new TreeItem<>(new String[] {line[0], line[1] + overwrite, comment});
+									item.getChildren().add(lineItem);
 								}
-								item.getChildren().add(lineItem);
+								
+								if(lineItemComment != null) {
+									item.getChildren().add(lineItemComment);
+									lineItemComment = null;
+								}
 							}
 						}
 						continue;
 					}
-					if(listValue.toString().startsWith("{")) {
+					else if(listValue.toString().startsWith("{")) {
 						listValueLine = listValue.toString().split("=");
 						listValueLine[0] = listValueLine[0].replace("{", "");
 						listValueLine[1] = listValueLine[1].replace("}", "");
@@ -375,11 +390,60 @@ public class Controller {
 						item.getChildren().add(getNodesFromYaml(listValueLine[0], listTmp, file));
 						continue;
 					}
+					else {
+						
+					}
 					line = listValue.toString().split(":");
 					if(line.length == 2) {
-//						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment, checkOverwrite(null, item.getValue()[0], line[0])});
-						lineItem = new TreeItem<>(new String[] {line[0], line[1], comment});
-						item.getChildren().add(lineItem);
+						try (Stream<String> stream = Files.lines(Paths.get(file.getPath()),charset)) {
+					        Object[] allLines = stream.toArray();
+							for (int j=0; j < allLines.length; j++) {
+								object = allLines[j];
+					        	lineString = object.toString();
+								if(lineString.trim().startsWith("#")){
+									if(j > 0) {
+										lastLineString = allLines[j-1].toString();
+									}else {
+										lastLineString = "";
+									}
+									if(j+1 <= allLines.length) {
+										nextLineString = allLines[j+1].toString();
+									}else {
+										nextLineString = "";
+									}
+									if(nextLineString.contains(line[0] + ":" + line[1])) {
+//										System.out.println("3:" + lineString);
+//										System.out.println("");
+					        			item.getChildren().add(new TreeItem<>(new String[] {"*COMMENT*", "*COMMENT*", lineString.replaceAll("#", "").trim()}));
+									}else if(lastLineString.contains(line[0] + ":" + line[1])) {
+//										System.out.println("4:" + lineString);
+//										System.out.println("");
+										lineItemComment = new TreeItem<>(new String[] {"*COMMENT*", "*COMMENT*", lineString.replaceAll("#", "").trim()});
+//										item.getChildren().add(new TreeItem<>(new String[] {"*COMMENT*", "*COMMENT*", lineString.replaceAll("#", "").trim()}));
+									}
+								}
+								if(lineString.replaceAll("-","").trim().contains(line[0] + ":" + line[1])) {
+									comment = lineString.replaceAll("-","").trim().split("#",2)[1];
+//									break;
+								}
+							}
+						}catch (Exception e) {
+							
+						}
+						if(!line[0].equals("null")) {
+							if(checkOverwrite(null, line[0])) {
+								overwrite = "(<X>)";
+							}else {
+								overwrite = "";
+							}
+							lineItem = new TreeItem<>(new String[] {line[0], line[1] + overwrite, comment});
+							item.getChildren().add(lineItem);
+						}
+						
+						if(lineItemComment != null) {
+							item.getChildren().add(lineItemComment);
+							lineItemComment = null;
+						}
 					}else {
 						item.getChildren().add(getNodesFromYaml(line[0],listValue, file));
 					}
@@ -400,6 +464,9 @@ public class Controller {
 		int localIndex = index;
 		if(!node.getChildren().isEmpty()) {
 			for (int i = 0; i < node.getChildren().size(); i++) {
+				if(node.getChildren().get(i).getValue()[0].equals("null")) {
+					continue;
+				}
 				if(node.getChildren().get(i).getValue()[1].equals("")) {
 					if(!node.getValue()[0].contains(".conf")) {
 						yamlClassNode.addKey(node.getChildren().get(i).getValue()[0]);
@@ -435,13 +502,15 @@ public class Controller {
 				}
 			}
 		}else {
-			if(node.getValue()[0].equals("")) {
-				bw.write("-");
-			}else {
-				yamlClassValue.addKey(node.getValue()[0]);
-				yamlClassValue.addValue(node.getValue()[1]);
-				yamlClassValue.addComment(node.getValue()[2]);
-				bw.write(yamlClassValue.toString());
+			if(!node.getValue()[0].equals("null")) {
+				if(node.getValue()[0].equals("")) {
+					bw.write("-");
+				}else {
+					yamlClassValue.addKey(node.getValue()[0]);
+					yamlClassValue.addValue(node.getValue()[1]);
+					yamlClassValue.addComment(node.getValue()[2]);
+					bw.write(yamlClassValue.toString());
+				}
 			}
 		}
 		return new Pair<>(node, "end");
@@ -482,7 +551,7 @@ public class Controller {
             	if(!f.getName().endsWith(".conf")) {
             		continue;
             	}
-            	if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
+            	if(Files.lines(Paths.get(f.getPath()),charset).toArray()[0].equals("---")) {
 //            		tbl_elements = new TreeTableView<String[]>();
 //            		tbl_elements.setRoot(getYamlNodesFromFile(f,0, null).getKey());
 //					saveNodesYaml(tbl_elements, f.getParentFile(), new File(f.getName()));
@@ -507,38 +576,24 @@ public class Controller {
 //			return "X";
 		}
 		for(File f : tmpFile.listFiles()) {
-//			System.out.println("Path: " + f.getPath() + f);
-            if(f.isDirectory()) { //Then we call the function recursively
-//            	System.out.println(mainViewController.selectedFile);
-//        		System.out.println("FOLDER: " + f.getPath());
+            if(f.isDirectory()) {
             	if(checkOverwrite(f,key)) {
             		return true;
             	} 
             }else {
-//            	System.out.println("FILE: " + f.getName());
             	if(!f.getName().equals(mainViewController.selectedFile.getName())) {
-            		//System.out.println("Selected " + mainViewController.selectedFile + "=!" + f.getName());
             		continue;
             	}else {
 //            		System.out.println("Find other " + f.getName());
             	}
-//            	if(key.equals("MaxPWM")) {
-//            		System.out.println(key);
-//            	}
-//            	System.out.println("Sel. Dir: " + mainViewController.selectedDir);
-//            	System.out.println("Loop Dir: "+ f.getParentFile());
-//            	if(mainViewController.selectedDir.length() >= f.getParentFile().length()) {
-//    				continue;
-//    			}
+
             	try {
-            		if(Files.lines(Paths.get(f.getPath())).toArray()[0].equals("---")) {
+            		if(Files.lines(Paths.get(f.getPath()),charset).toArray()[0].equals("---")) {
                 		InputStream targetStream = new FileInputStream(f);
                 		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
-                		try (Stream<String> stream = Files.lines(Paths.get(f.getPath()))) {
+                		try (Stream<String> stream = Files.lines(Paths.get(f.getPath()),charset)) {
         			        Object[] allLines = stream.toArray();
         			        for (int i=0; i < allLines.length; i++) {
-//        			        	if(allLines[i].toString().contains(parent)) {
-//        			        		for (int j = i; j < allLines.length; j++) {
         			        	if(!allLines[i].toString().endsWith(":")) {
 				        			tmp = allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
 				        			if(allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {

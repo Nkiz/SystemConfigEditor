@@ -3,12 +3,19 @@ package cnc.msl;
 import java.io.IOException;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import cnc.msl.view.MainViewController;
 
@@ -23,7 +30,10 @@ public class Main extends Application {
 		this.mainStage = mainStage;
         this.mainStage.setTitle("ConfigApp");
         isRunning = true;
+	
         showMainView();
+        mainStage.setOnCloseRequest(e -> Platform.exit());
+        
 	}
 	
 	@Override
@@ -31,6 +41,7 @@ public class Main extends Application {
 		// TODO Auto-generated method stub
 		isRunning = false;
 		super.stop();
+		System.exit(0);
 	}
 	
 	public static boolean getIsRunning(){

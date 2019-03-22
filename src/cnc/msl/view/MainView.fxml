@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8.0.201" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cnc.msl.view.MainViewController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="cnc.msl.view.MainViewController">
    <children>
       <VBox fx:id="vbox_main" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -49,7 +49,7 @@
                         <TreeTableView fx:id="tbl_directory" onMouseClicked="#handleSelectFile" prefHeight="398.0" prefWidth="294.0" showRoot="false" sortMode="ONLY_FIRST_LEVEL" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
                   </AnchorPane>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="100.0">
+                <AnchorPane fx:id="ap_table" minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="100.0">
                      <children>
                         <TreeTableView fx:id="tbl_elements" maxHeight="0.0" minHeight="0.0" prefHeight="573.0" prefWidth="838.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
@@ -66,7 +66,7 @@
                         <Rectangle2D />
                      </viewport>
                   </ImageView>
-                  <ProgressIndicator fx:id="pi_load" visible="true" />
+                  <ProgressIndicator fx:id="pi_load" visible="false" />
                   <Label id="lbl_changes" fx:id="lbl_changes" text="unsaved changes" textFill="#eb0909" visible="false" />
                   <Button fx:id="btn_del" cancelButton="true" mnemonicParsing="false" onAction="#delLine" text="-" />
                   <Button fx:id="btn_add" cancelButton="true" mnemonicParsing="false" onAction="#addLine" text="+" />

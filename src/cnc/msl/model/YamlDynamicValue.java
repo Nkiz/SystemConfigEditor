@@ -30,7 +30,10 @@ public class YamlDynamicValue<ClassTyp>{
    }	
    
    public String toString() { 
-	   if(comment != "" || comment == null ) {
+	   if((value == "*COMMENT*" || value == null) && (key == "*COMMENT*" || key == null) && (comment != "" && value != null)){
+		   return "#" + comment + System.lineSeparator();
+	   }
+	   else if(comment != "" && comment != null ) {
 		   return "  - " +  key.toString().trim() + ":" + value.toString().trim() + " #" + comment +  System.lineSeparator();
 	   }else {
 	   	   return "  - " +  key.toString().trim() + ":" + value.toString().trim() + System.lineSeparator();
