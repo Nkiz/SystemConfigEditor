@@ -196,26 +196,37 @@ public class MainViewController {
             public TextFieldTreeTableCell<String[], String> call(TreeTableColumn<String[], String> param) {
                 return new TextFieldTreeTableCell<String[], String>(new DefaultStringConverter()) {
 
-                @Override
-                public void updateItem(String item, boolean empty) {
-//                        if(item != null) {
-                    	super.updateItem(item, empty);
-                        try {
-                        	if(item.contains("(<X>)")){
-                        		item = item.replace("(<X>)", "");
-                        		setText(item);
-                        		BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
-							    this.setBackground(new Background(fill));
-                            }else {
-                            	BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
-                                this.setBackground(new Background(fill));
-                                setText(item);
-                            }
-						} catch (Exception e) {
-							BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+	                @Override
+	                public void updateItem(String item, boolean empty) {
+//	                	String tmpItem = item;
+//	                	if(!item.isEmpty()) {
+//	                		tmpItem = item.replace("(<X>)", "");
+//	                	}
+                    	if(!empty) {
+	                        try {
+	                        	super.updateItem(item.replace("(<X>)", ""), empty);
+	                        	if(item.contains("(<X>)")){
+	                        		item = item.replace("(<X>)", "");
+	                        		setText(item);
+	                        		BackgroundFill fill = new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY);
+								    this.setBackground(new Background(fill));
+	                            }else {
+	                            	BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+	                                this.setBackground(new Background(fill));
+	                                item = item.replace("(<X>)", "");
+	                        		setText(item);
+	                            }
+							} catch (Exception e) {
+								BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
+	                            this.setBackground(new Background(fill));
+	                            item = item.replace("(<X>)", "");
+	                    		setText(item);
+							}
+                    	}else {
+                    		super.updateItem(item, empty);
+                    		BackgroundFill fill = new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY);
                             this.setBackground(new Background(fill));
-                            setText(item);
-						}
+                    	}
                     }
                 };
             }

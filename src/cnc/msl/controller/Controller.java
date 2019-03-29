@@ -364,7 +364,7 @@ public class Controller {
 										
 									}
 								if(!line[0].equals("null")) {
-									if(checkOverwrite(null, line[0])) {
+									if(checkOverwrite(null, line[0], line[1])) {
 										overwrite = "(<X>)";
 									}else {
 										overwrite = "";
@@ -431,7 +431,7 @@ public class Controller {
 							
 						}
 						if(!line[0].equals("null")) {
-							if(checkOverwrite(null, line[0])) {
+							if(checkOverwrite(null, line[0], line[1])) {
 								overwrite = "(<X>)";
 							}else {
 								overwrite = "";
@@ -565,19 +565,107 @@ public class Controller {
         }
 		return true;
 	}
-	public boolean checkOverwrite(File file, String key) throws IOException {
+	
+	public boolean checkOverwrite(File file, String key, String value) throws IOException {
 		File tmpFile = file;
 		Yaml yaml = new Yaml();
 		Collection<Object> col = null;
 		Map<String, String> linkedHashMap = new LinkedHashMap<String, String>();
 		String tmp = "";
+		
+//    	if(mainViewController.selectedDir.getPath().equals(mainViewController.selectedWs.getPath())) {
+//    		return false;
+//    	}
+		
+		if(mainViewController.selectedDir.getPath().equals(mainViewController.selectedWs.getPath())) {
+			return false;
+		}
+		
 		if(tmpFile == null) {
-			tmpFile = mainViewController.selectedDir;
+			tmpFile = mainViewController.selectedDir.getParentFile();
+//			String tmp2 = mainViewController.selectedDir.getPath();
+//			File f2 = mainViewController.selectedDir.getParentFile();
+//			String tmp3 = mainViewController.selectedDir.getParent();
+//			String tmp4 = mainViewController.selectedDir.getParent();
+//			tmpFile = mainViewController.selectedWs;
+//			return "X";
+		}else {
+			tmpFile = file.getParentFile();
+		}
+		
+		for(File f : tmpFile.listFiles()) {
+//            if(f.isDirectory()) {
+//            	if(checkOverwrite(f,key, value)) {
+//            		return true;
+//            	} 
+        	if(!f.getName().equals(mainViewController.selectedFile.getName())) {
+        		continue;
+        	}else {
+//            		System.out.println("Find other " + f.getName());
+        	}
+
+        	try {
+        		if(Files.lines(Paths.get(f.getPath()),charset).toArray()[0].equals("---")) {
+            		InputStream targetStream = new FileInputStream(f);
+            		Map<String,Object> result = (Map<String,Object>)yaml.load(targetStream);
+            		try (Stream<String> stream = Files.lines(Paths.get(f.getPath()),charset)) {
+    			        Object[] allLines = stream.toArray();
+    			        for (int i=0; i < allLines.length; i++) {
+    			        	if(!allLines[i].toString().endsWith(":")) {
+			        			tmp = allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
+			        			if(allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {
+			        				if(!mainViewController.selectedDir.equals(f.getParentFile())) {
+			        					String test = allLines[i].toString().split(":")[1].split("#", 2)[0].trim();
+			        					if(!allLines[i].toString().split(":")[1].split("#", 2)[0].trim().equals(value.trim())) {
+			        						return true;
+			        					}
+//				        					System.out.println("X: " + f.getPath());
+			        				}else {
+//				        					System.out.println("SAME FILE");
+			        				}
+			        			}
+		        			}
+//    								}
+//        			        	}
+    			        }
+            		}catch (Exception e) {
+						return false;
+					}
+				}
+			} catch (Exception e) {
+				return false;
+			}
+        }
+		if(tmpFile.getPath().equals(mainViewController.selectedWs.getPath())) {
+			return false;
+		}
+		if(checkOverwrite(tmpFile,key, value)) {
+    		return true;
+    	}else {
+    		return false;
+    	}
+	}
+	
+	
+	
+	public boolean checkOverwrite2(File file, String key, String value) throws IOException {
+		File tmpFile = file;
+		Yaml yaml = new Yaml();
+		Collection<Object> col = null;
+		Map<String, String> linkedHashMap = new LinkedHashMap<String, String>();
+		String tmp = "";
+		
+    	if(mainViewController.selectedDir.getPath().equals(mainViewController.selectedWs.getPath())) {
+    		return false;
+    	}
+		
+		if(tmpFile == null) {
+			tmpFile = mainViewController.selectedWs;
 //			return "X";
 		}
 		for(File f : tmpFile.listFiles()) {
             if(f.isDirectory()) {
-            	if(checkOverwrite(f,key)) {
+            	if(checkOverwrite(f,key, value)) {
             		return true;
             	} 
             }else {
@@ -598,8 +686,11 @@ public class Controller {
 				        			tmp = allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim();
 				        			if(allLines[i].toString().split(":")[0].replaceAll("- ", "").replaceAll(":", "").trim().equals(key.trim())) {
 				        				if(!mainViewController.selectedDir.equals(f.getParentFile())) {
+				        					String test = allLines[i].toString().split(":")[1].split("#", 2)[0].trim();
+				        					if(!allLines[i].toString().split(":")[1].split("#", 2)[0].trim().equals(value.trim())) {
+				        						return true;
+				        					}
 //				        					System.out.println("X: " + f.getPath());
-				        					return true;
 				        				}else {
 //				        					System.out.println("SAME FILE");
 				        				}

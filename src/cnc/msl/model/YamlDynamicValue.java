@@ -34,9 +34,9 @@ public class YamlDynamicValue<ClassTyp>{
 		   return "#" + comment + System.lineSeparator();
 	   }
 	   else if(comment != "" && comment != null ) {
-		   return "  - " +  key.toString().trim() + ":" + value.toString().trim() + " #" + comment +  System.lineSeparator();
+		   return "  - " +  key.toString().trim() + ":" + value.toString().replace("(<X>)", "").trim() + " #" + comment +  System.lineSeparator();
 	   }else {
-	   	   return "  - " +  key.toString().trim() + ":" + value.toString().trim() + System.lineSeparator();
+	   	   return "  - " +  key.toString().trim() + ":" + value.toString().replace("(<X>)", "").trim() + System.lineSeparator();
    	   }
    } 
    
